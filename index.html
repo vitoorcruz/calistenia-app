@@ -816,6 +816,68 @@ async function logout(){
   renderAuth();
 }
 
+/* ---- painel admin (acesse em /#admin) ---- */
+let ADMIN={pw:'',data:null,busy:false,err:''};
+function renderAdmin(){
+  document.getElementById('tabbar').style.display='none';
+  document.getElementById('view').innerHTML='<div class="fade">'+viewAdmin()+'</div>';
+  window.scrollTo(0,0);
+  const f=document.getElementById('adminPw'); if(f)f.focus();
+}
+function viewAdmin(){
+  if(!ADMIN.data){
+    return `<div style="min-height:calc(100dvh - 40px);display:flex;flex-direction:column;justify-content:center;gap:20px;padding:8px 4px">
+      <div style="text-align:center"><div style="font-weight:800;font-size:24px;color:var(--rosa)">Painel Admin</div><div style="font-size:14px;color:var(--cinza);margin-top:4px">Acesso restrito</div></div>
+      <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:6px">Senha do painel</div>
+        <input id="adminPw" type="password" autocomplete="off" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;border:1px solid #E3E3E8;background:#FAFAFB;border-radius:10px;height:48px;padding:0 14px;font-size:15px;outline:none"></div>
+        ${ADMIN.err?`<div style="background:#FDECEC;color:#C0392B;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600">${ADMIN.err}</div>`:''}
+        <button class="btn-primary" ${ADMIN.busy?'disabled':''} onclick="adminLogin()">${ADMIN.busy?'Entrando…':'Entrar'}</button>
+      </div>
+      <div style="text-align:center"><span onclick="location.hash='';location.reload()" style="color:var(--cinza);font-weight:700;cursor:pointer;font-size:14px">← Voltar ao app</span></div>
+    </div>`;
+  }
+  const d=ADMIN.data, fmt=ts=>ts?new Date(ts).toLocaleDateString('pt-BR'):'—';
+  return `<div style="padding:4px 0 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div><div style="font-size:22px;font-weight:800">Painel Admin</div><div style="font-size:13px;color:var(--cinza)">Usuários e uso</div></div>
+      <button class="btn-ghost" onclick="adminLogin()">Atualizar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      ${miniStat(d.totals.users,'Usuários')}${miniStat(d.totals.diets,'Dietas geradas')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${d.users.map(u=>`<div class="card" style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div style="min-width:0"><div style="font-size:16px;font-weight:800;color:var(--tinta-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(u.name||'—')}</div>
+          <div style="font-size:13px;color:var(--cinza);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(u.email||'—')}</div></div>
+          <span style="background:var(--rosa-nevoa);color:var(--rosa);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;flex-shrink:0">${u.progress_pct||0}%</span>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:10px;font-size:13px;color:var(--cinza);font-weight:600;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px">${svg('flame',{s:13})} ${u.workouts_done||0} treinos</span>
+          <span style="display:flex;align-items:center;gap:4px">${svg('leaf',{s:13})} ${u.diets||0} dietas</span>
+          <span style="display:flex;align-items:center;gap:4px">${svg('cal',{s:13})} ${fmt(u.created_at)}</span>
+        </div>
+      </div>`).join('')}
+      ${d.users.length===0?'<div style="text-align:center;color:var(--cinza);padding:20px">Nenhum usuário ainda.</div>':''}
+    </div>
+    <div style="text-align:center;margin-top:18px"><span onclick="location.hash='';location.reload()" style="color:var(--cinza);font-weight:700;cursor:pointer;font-size:14px">← Voltar ao app</span></div>
+  </div>`;
+}
+async function adminLogin(){
+  const el=document.getElementById('adminPw');
+  if(el)ADMIN.pw=(el.value||'').trim();
+  if(!ADMIN.pw){ADMIN.err='Digite a senha.';renderAdmin();return;}
+  ADMIN.busy=true;ADMIN.err='';renderAdmin();
+  try{
+    const r=await fetch('/.netlify/functions/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:ADMIN.pw})});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Erro ao carregar');
+    ADMIN.data=j;ADMIN.busy=false;renderAdmin();
+  }catch(e){ ADMIN.busy=false;ADMIN.data=null;ADMIN.err=e.message;renderAdmin(); }
+}
+window.addEventListener('hashchange',()=>{ if(location.hash==='#admin'){ADMIN.data=null;renderAdmin();} });
+
 /* ---- boot ---- */
 async function enterApp(user){
   AUTH.busy=false;
@@ -825,6 +887,7 @@ async function enterApp(user){
   go('home'); cloudSave();
 }
 async function boot(){
+  if(location.hash==='#admin'){ renderAdmin(); return; } // painel admin
   if(!sb){ render(); return; } // sem Supabase: modo 100% local
   sb.auth.onAuthStateChange((evt,sess)=>{
     if(evt==='SIGNED_IN' && sess&&sess.user){ if(!AUTH.user) enterApp(sess.user); }
