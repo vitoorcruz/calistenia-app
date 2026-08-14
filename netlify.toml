@@ -2,5 +2,10 @@
   publish = "."
   functions = "netlify/functions"
 
+[build.environment]
+  # A URL do Supabase é PÚBLICA (vai no frontend). Não é segredo —
+  # dizemos ao secrets-scanner para ignorá-la. A service_role NÃO está no código.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
 [functions]
   node_bundler = "esbuild"
