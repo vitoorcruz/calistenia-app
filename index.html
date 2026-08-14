@@ -715,7 +715,11 @@ const SUPA_URL='https://bjtxrtsazsehcqmtnpkg.supabase.co';
 const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdHhydHNhenNlaGNxbXRucGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3Mjc4ODQsImV4cCI6MjEwMjMwMzg4NH0.GvHa-hxvbN_cNvV-2NDYwJzRf2TtnDVY3_7ULlcYhR0';
 let sb=null;
 try{ if(window.supabase) sb=window.supabase.createClient(SUPA_URL,SUPA_ANON); }catch(e){ console.warn('Supabase indisponível',e); }
-let AUTH={user:null,mode:'login',busy:false,err:''};
+let AUTH={user:null,mode:'login',busy:false,err:'',paid:false,plan:null,isAdmin:false};
+
+/* Links de checkout da Cakto — TROQUE pelos seus links reais */
+const CAKTO_URL_ASSINATURA='https://pay.cakto.com.br/SEU_LINK_ASSINATURA';
+const CAKTO_URL_UNICA='https://pay.cakto.com.br/SEU_LINK_COMPRA_UNICA';
 
 // ---- estado que sincronizamos (sem cache de chat gigante) ----
 function cloudPayload(){
@@ -856,15 +860,15 @@ function viewAdmin(){
       <div><div style="font-size:22px;font-weight:800">Painel Admin</div><div style="font-size:13px;color:var(--cinza)">Usuários e uso</div></div>
       <button class="btn-ghost" onclick="adminLoad()">Atualizar</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      ${miniStat(d.totals.users,'Usuários')}${miniStat(d.totals.diets,'Dietas geradas')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+      ${miniStat(d.totals.users,'Usuários')}${miniStat(d.totals.paid||0,'Pagantes')}${miniStat(d.totals.diets,'Dietas')}
     </div>
     <div style="display:flex;flex-direction:column;gap:10px">
       ${d.users.map(u=>`<div class="card" style="padding:14px 16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div style="min-width:0"><div style="font-size:16px;font-weight:800;color:var(--tinta-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(u.name||'—')}</div>
           <div style="font-size:13px;color:var(--cinza);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(u.email||'—')}</div></div>
-          <span style="background:var(--rosa-nevoa);color:var(--rosa);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;flex-shrink:0">${u.progress_pct||0}%</span>
+          <span style="background:${u.paid?'#E8F8F1':'#F5F5F7'};color:${u.paid?'#0E9F6E':'#8E8E99'};padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;flex-shrink:0">${u.paid?(u.plan==='assinatura'?'Assinante':'Pago'):'Grátis'}</span>
         </div>
         <div style="display:flex;gap:14px;margin-top:10px;font-size:13px;color:var(--cinza);font-weight:600;flex-wrap:wrap">
           <span style="display:flex;align-items:center;gap:4px">${svg('flame',{s:13})} ${u.workouts_done||0} treinos</span>
@@ -892,8 +896,61 @@ async function enterApp(user){
   AUTH.busy=false;
   await loadCloud(user);
   if(AUTH.pendingName){ S.name=AUTH.pendingName; AUTH.pendingName=null; }
+  await adminCheck();                              // define AUTH.isAdmin
+  const paid = AUTH.isAdmin || await checkEntitlement();
+  if(!paid){ renderPaywall(); return; }            // paywall total: sem pagar, não entra
   document.getElementById('tabbar').style.display='flex';
-  go('home'); cloudSave(); adminCheck();
+  go('home'); cloudSave();
+}
+async function checkEntitlement(){
+  try{
+    const {data}=await sb.from('entitlements').select('active,plan,status,expires_at').limit(1);
+    const e=(data&&data[0])||null;
+    AUTH.plan=e?e.plan:null;
+    let ok=!!(e&&e.active);
+    if(ok&&e.expires_at&&new Date(e.expires_at)<new Date()) ok=false;
+    AUTH.paid=ok; return ok;
+  }catch(err){ AUTH.paid=false; return false; }
+}
+function renderPaywall(){
+  document.getElementById('tabbar').style.display='none';
+  document.getElementById('view').innerHTML='<div class="fade">'+viewPaywall()+'</div>';
+  window.scrollTo(0,0);
+}
+function viewPaywall(){
+  const feat=(t)=>`<div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--tinta-suave)"><span style="color:var(--verde);flex-shrink:0;margin-top:2px">${svg('check',{s:16,c:'#10B981',w:3})}</span>${t}</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:18px;padding:8px 2px 24px">
+    <div style="text-align:center;margin-top:8px">
+      <span style="display:inline-block;width:52px;height:52px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
+      <div style="font-size:24px;font-weight:800;margin-top:8px">Desbloqueie o Calistenia</div>
+      <div style="font-size:14px;color:var(--cinza);margin-top:4px">Programa de 21 dias, dieta e suporte com IA</div>
+    </div>
+    <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      ${feat('Programa completo de <strong>21 dias</strong> em vídeo')}
+      ${feat('<strong>Dieta personalizada</strong> gerada por IA')}
+      ${feat('<strong>Receitas</strong> saudáveis sob medida')}
+      ${feat('<strong>Suporte 24h</strong> com a assistente Atlas')}
+      ${feat('Acompanhamento de progresso e atividades extras')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <a href="${CAKTO_URL_ASSINATURA}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div class="btn-primary" style="height:56px;flex-direction:column;gap:2px;line-height:1.1">Assinar agora<span style="font-size:12px;font-weight:600;opacity:.9">acesso completo, renovação automática</span></div></a>
+      <a href="${CAKTO_URL_UNICA}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div style="border:1.5px solid var(--rosa);color:var(--rosa);height:52px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:700;font-size:16px;line-height:1.1">Compra única<span style="font-size:12px;font-weight:600;opacity:.8">pague uma vez, acesso vitalício</span></div></a>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;font-size:14px;color:var(--tinta-suave)">
+      Já comprou? Use o <strong>mesmo e-mail</strong> da compra.<br>
+      <span style="font-size:13px;color:var(--cinza)">Conta: ${AUTH.user?AUTH.user.email:''}</span>
+      <button class="btn-primary" style="margin-top:12px;height:46px" onclick="refreshAccess(this)">Já comprei — liberar acesso</button>
+    </div>
+    <div style="text-align:center"><span onclick="logout()" style="color:var(--cinza);font-weight:700;cursor:pointer;font-size:14px">Sair / trocar de conta</span></div>
+  </div>`;
+}
+async function refreshAccess(btn){
+  if(btn){btn.disabled=true;btn.textContent='Verificando…';}
+  const paid=AUTH.isAdmin||await checkEntitlement();
+  if(paid){ document.getElementById('tabbar').style.display='flex'; go('home'); cloudSave(); }
+  else{ if(btn){btn.disabled=false;btn.textContent='Já comprei — liberar acesso';} alert('Ainda não encontramos seu pagamento. 🌱\n\nSe você acabou de comprar, aguarde ~1 minuto e tente de novo. Confirme que usou o MESMO e-mail desta conta na compra.'); }
 }
 async function boot(){
   if(location.hash==='#admin'){ openAdmin(); return; } // painel admin

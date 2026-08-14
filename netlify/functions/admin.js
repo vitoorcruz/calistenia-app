@@ -48,24 +48,35 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: cors, body: JSON.stringify({ error: "not_admin" }) };
 
     // 3) admin confirmado → devolve os dados
-    const [pr, dr] = await Promise.all([
+    const [pr, dr, er] = await Promise.all([
       fetch(`${URL}/rest/v1/profiles?select=id,email,name,workouts_done,progress_pct,created_at,updated_at&order=created_at.desc`, { headers: srh }),
       fetch(`${URL}/rest/v1/diets?select=user_id,type,created_at`, { headers: srh }),
+      fetch(`${URL}/rest/v1/entitlements?select=email,active,plan,status`, { headers: srh }),
     ]);
     const profiles = await pr.json();
     const diets = await dr.json();
+    const ents = await er.json();
     if (!pr.ok) return { statusCode: pr.status, headers: cors, body: JSON.stringify({ error: profiles.message || "Erro ao ler perfis" }) };
 
     const byUser = {};
     (Array.isArray(diets) ? diets : []).forEach((d) => { byUser[d.user_id] = (byUser[d.user_id] || 0) + 1; });
-    const users = (Array.isArray(profiles) ? profiles : []).map((p) => ({
-      name: p.name, email: p.email, workouts_done: p.workouts_done, progress_pct: p.progress_pct,
-      diets: byUser[p.id] || 0, created_at: p.created_at, updated_at: p.updated_at,
-    }));
+    const entByEmail = {};
+    (Array.isArray(ents) ? ents : []).forEach((e) => { entByEmail[(e.email || "").toLowerCase()] = e; });
+
+    let paidCount = 0;
+    const users = (Array.isArray(profiles) ? profiles : []).map((p) => {
+      const e = entByEmail[(p.email || "").toLowerCase()];
+      if (e && e.active) paidCount++;
+      return {
+        name: p.name, email: p.email, workouts_done: p.workouts_done, progress_pct: p.progress_pct,
+        diets: byUser[p.id] || 0, created_at: p.created_at, updated_at: p.updated_at,
+        paid: !!(e && e.active), plan: e ? e.plan : null,
+      };
+    });
 
     return {
       statusCode: 200, headers: cors,
-      body: JSON.stringify({ totals: { users: users.length, diets: Array.isArray(diets) ? diets.length : 0 }, users }),
+      body: JSON.stringify({ totals: { users: users.length, diets: Array.isArray(diets) ? diets.length : 0, paid: paidCount }, users }),
     };
   } catch (e) {
     return { statusCode: 502, headers: cors, body: JSON.stringify({ error: "Falha ao consultar o Supabase: " + e.message }) };
