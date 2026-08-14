@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Big+Shoulders+Display:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --rosa:#C8425C; --rosa-escuro:#A62F47; --rosa-claro:#D97286; --rosa-nevoa:#FCEFF2;
@@ -144,7 +145,7 @@ const DEFAULT={
 };
 let S=load();
 function load(){try{const s=JSON.parse(localStorage.getItem('calistenia'));return s?{...structuredClone(DEFAULT),...s}:structuredClone(DEFAULT)}catch(e){return structuredClone(DEFAULT)}}
-function save(){localStorage.setItem('calistenia',JSON.stringify(S))}
+function save(){try{localStorage.setItem('calistenia',JSON.stringify(S))}catch(e){} cloudSave();}
 function doneCount(){return Object.values(S.done).filter(Boolean).length}
 function progressPct(){return Math.round(doneCount()/21*100)}
 function nextDay(){for(let d=1;d<=21;d++){if(!S.done[d])return d}return 21}
@@ -579,7 +580,7 @@ Formato: comece com "Meta calórica: ~X kcal/dia", depois o cardápio em tópico
   showLoader('Gerando sua dieta com a IA Atlas… 🌱');
   try{
     const txt=await callAI(prompt);
-    S.ultimaDieta=txt; save();
+    S.ultimaDieta=txt; save(); cloudDiet('dieta',txt);
     hideLoader(); go('dieta','plano');
   }catch(e){ hideLoader(); alert('Não consegui gerar agora: '+e.message); }
 }
@@ -597,7 +598,7 @@ Para cada receita mostre: nome, ingredientes em tópicos curtos e o modo de prep
   showLoader('Criando receitas com a IA Atlas… 🍎');
   try{
     const txt=await callAI(prompt);
-    S.ultimaReceita=txt; save();
+    S.ultimaReceita=txt; save(); cloudDiet('receita',txt);
     hideLoader(); go('dieta','receitas');
   }catch(e){ hideLoader(); alert('Não consegui gerar as receitas agora: '+e.message); }
 }
@@ -659,7 +660,7 @@ function viewPerfil(){
   <div class="card" style="padding:22px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px">
     <div style="width:72px;height:72px;border-radius:999px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff">${svg('user',{s:34})}</div>
     <input value="${S.name}" onchange="S.name=this.value.trim()||'anjinha';save()" style="text-align:center;font-size:20px;font-weight:800;border:none;outline:none;background:transparent;width:100%">
-    <div style="font-size:13px;color:var(--cinza)">Plano Light · membro Calistenia</div>
+    <div style="font-size:13px;color:var(--cinza)">${AUTH.user?AUTH.user.email:'Plano Light · membro Calistenia'}</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
     ${miniStat(doneCount(),'Treinos')}${miniStat(21-doneCount(),'Restantes')}${miniStat(progressPct()+'%','Progresso')}
@@ -675,7 +676,8 @@ function viewPerfil(){
     ${listRow('book','Filosofia do Treino','Entenda nossa metodologia',"go('home','philosophy')",'#06AEE4')}
     ${listRow('gift','Bônus e Conteúdos','Materiais extras exclusivos',"go('home','bonus')",'#7B61FF',true)}
   </div>
-  <div onclick="resetar()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--rosa);font-weight:700;font-size:15px;padding:14px;cursor:pointer">${svg('trash',{s:16})} Resetar Progresso</div>`;
+  <div onclick="resetar()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--rosa);font-weight:700;font-size:15px;padding:14px;cursor:pointer">${svg('trash',{s:16})} Resetar Progresso</div>
+  ${AUTH.user?`<div onclick="logout()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--cinza);font-weight:700;font-size:15px;padding:6px 14px 14px;cursor:pointer">Sair da conta</div>`:''}`;
 }
 function miniStat(v,l){return `<div class="card" style="padding:16px 8px;text-align:center"><div style="font-size:24px;font-weight:800${l==='Progresso'?';color:var(--rosa)':''}">${v}</div><div style="font-size:12px;color:var(--cinza);font-weight:600">${l}</div></div>`}
 function resetar(){if(confirm('Resetar todo o seu progresso? Isso apaga treinos concluídos e minutos. Seus dados de perfil e dieta permanecem.')){S.done={};S.minutes=0;save();alert('Progresso resetado. Um novo começo! 🌱');go('home')}}
@@ -705,7 +707,133 @@ function ensureModal(){
 function closeModal(){const el=document.getElementById('modal');if(el)el.style.display='none';}
 const _spin=document.createElement('style');_spin.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(_spin);
 
-render();
+/* ================= SUPABASE (auth + nuvem) ================= */
+const SUPA_URL='https://bjtxrtsazsehcqmtnpkg.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdHhydHNhenNlaGNxbXRucGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3Mjc4ODQsImV4cCI6MjEwMjMwMzg4NH0.GvHa-hxvbN_cNvV-2NDYwJzRf2TtnDVY3_7ULlcYhR0';
+let sb=null;
+try{ if(window.supabase) sb=window.supabase.createClient(SUPA_URL,SUPA_ANON); }catch(e){ console.warn('Supabase indisponível',e); }
+let AUTH={user:null,mode:'login',busy:false,err:''};
+
+// ---- estado que sincronizamos (sem cache de chat gigante) ----
+function cloudPayload(){
+  return {
+    id:AUTH.user.id, email:AUTH.user.email, name:S.name,
+    data:{done:S.done,minutes:S.minutes,metaPeso:S.metaPeso,perfil:S.perfil,restricoes:S.restricoes,foods:S.foods,extras:S.extras,ultimaDieta:S.ultimaDieta,ultimaReceita:S.ultimaReceita},
+    workouts_done:doneCount(), progress_pct:progressPct(), updated_at:new Date().toISOString()
+  };
+}
+let _saveTimer=null;
+function cloudSave(){
+  if(!sb||!AUTH.user)return;
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(async()=>{ try{ await sb.from('profiles').upsert(cloudPayload()); }catch(e){ console.warn('cloudSave',e);} },800);
+}
+async function cloudDiet(type,content){
+  if(!sb||!AUTH.user)return;
+  try{ await sb.from('diets').insert({user_id:AUTH.user.id,type,content}); }catch(e){ console.warn('cloudDiet',e); }
+}
+async function loadCloud(user){
+  AUTH.user=user;
+  try{
+    const {data}=await sb.from('profiles').select('*').eq('id',user.id).single();
+    if(data){
+      if(data.name)S.name=data.name;
+      const d=data.data||{};
+      for(const k of ['done','minutes','metaPeso','perfil','restricoes','foods','extras','ultimaDieta','ultimaReceita'])
+        if(d[k]!==undefined)S[k]=d[k];
+    }
+  }catch(e){ console.warn('loadCloud',e); }
+  try{localStorage.setItem('calistenia',JSON.stringify(S))}catch(e){}
+}
+
+/* ---- telas de autenticação ---- */
+function renderAuth(){
+  document.getElementById('tabbar').style.display='none';
+  document.getElementById('view').innerHTML='<div class="fade">'+viewAuth()+'</div>';
+  const f=document.getElementById('authEmail'); if(f)f.focus();
+}
+function viewAuth(){
+  const signup=AUTH.mode==='signup';
+  return `<div style="min-height:calc(100dvh - 40px);display:flex;flex-direction:column;justify-content:center;gap:22px;padding:8px 4px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+      <span style="display:inline-block;width:64px;height:64px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
+      <div style="font-family:'Big Shoulders Display';font-weight:800;font-size:30px;color:var(--rosa);letter-spacing:1px">CALISTENIA</div>
+      <div style="font-size:14px;color:var(--cinza);text-align:center">${signup?'Crie sua conta e comece sua jornada':'Bem-vinda de volta! Entre para continuar'}</div>
+    </div>
+    <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:14px">
+      ${signup?`<div><div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:6px">Seu nome</div>
+        <input id="authName" placeholder="Como quer ser chamada?" style="width:100%;border:1px solid #E3E3E8;background:#FAFAFB;border-radius:10px;height:48px;padding:0 14px;font-size:15px;outline:none"></div>`:''}
+      <div><div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:6px">E-mail</div>
+        <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com" style="width:100%;border:1px solid #E3E3E8;background:#FAFAFB;border-radius:10px;height:48px;padding:0 14px;font-size:15px;outline:none"></div>
+      <div><div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:6px">Senha</div>
+        <input id="authPass" type="password" autocomplete="${signup?'new-password':'current-password'}" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doAuth()" style="width:100%;border:1px solid #E3E3E8;background:#FAFAFB;border-radius:10px;height:48px;padding:0 14px;font-size:15px;outline:none"></div>
+      ${AUTH.err?`<div style="background:#FDECEC;color:#C0392B;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600">${AUTH.err}</div>`:''}
+      <button class="btn-primary" ${AUTH.busy?'disabled':''} onclick="doAuth()" style="margin-top:4px">${AUTH.busy?'Aguarde…':(signup?'Criar conta':'Entrar')}</button>
+    </div>
+    <div style="text-align:center;font-size:14px;color:var(--cinza)">
+      ${signup?'Já tem conta?':'Ainda não tem conta?'}
+      <span onclick="AUTH.mode='${signup?'login':'signup'}';AUTH.err='';renderAuth()" style="color:var(--rosa);font-weight:700;cursor:pointer">${signup?'Entrar':'Criar agora'}</span>
+    </div>
+  </div>`;
+}
+async function doAuth(){
+  if(!sb){AUTH.err='Serviço indisponível. Recarregue a página.';renderAuth();return;}
+  const email=(document.getElementById('authEmail').value||'').trim();
+  const pass=(document.getElementById('authPass').value||'').trim();
+  const nome=(document.getElementById('authName')?.value||'').trim();
+  if(!email||!pass){AUTH.err='Preencha e-mail e senha.';renderAuth();return;}
+  if(pass.length<6){AUTH.err='A senha precisa de ao menos 6 caracteres.';renderAuth();return;}
+  AUTH.busy=true;AUTH.err='';renderAuth();
+  try{
+    if(AUTH.mode==='signup'){
+      const {data,error}=await sb.auth.signUp({email,password:pass});
+      if(error)throw error;
+      if(nome)S.name=nome;
+      if(!data.session){ // confirmação de e-mail ligada
+        AUTH.busy=false;AUTH.err='Conta criada! Confirme pelo link enviado ao seu e-mail e depois faça login.';AUTH.mode='login';renderAuth();return;
+      }
+    }else{
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error)throw error;
+    }
+    // onAuthStateChange cuida do resto
+  }catch(e){
+    AUTH.busy=false;
+    AUTH.err=traduzErro(e.message||'Erro ao autenticar');
+    renderAuth();
+  }
+}
+function traduzErro(m){
+  if(/Invalid login credentials/i.test(m))return'E-mail ou senha incorretos.';
+  if(/already registered|already exists/i.test(m))return'Este e-mail já tem conta. Faça login.';
+  if(/rate limit/i.test(m))return'Muitas tentativas. Aguarde um instante.';
+  return m;
+}
+async function logout(){
+  if(sb)await sb.auth.signOut();
+  AUTH.user=null; S=structuredClone(DEFAULT);
+  try{localStorage.removeItem('calistenia')}catch(e){}
+  renderAuth();
+}
+
+/* ---- boot ---- */
+async function enterApp(user){
+  AUTH.busy=false;
+  await loadCloud(user);
+  document.getElementById('tabbar').style.display='flex';
+  go('home'); cloudSave();
+}
+async function boot(){
+  if(!sb){ render(); return; } // sem Supabase: modo 100% local
+  sb.auth.onAuthStateChange((evt,sess)=>{
+    if(evt==='SIGNED_IN' && sess&&sess.user){ if(!AUTH.user) enterApp(sess.user); }
+    else if(evt==='SIGNED_OUT'){ AUTH.user=null; renderAuth(); }
+  });
+  const {data:{session}}=await sb.auth.getSession();
+  if(session&&session.user){ await enterApp(session.user); }
+  else { renderAuth(); }
+}
+boot();
 </script>
 </body>
 </html>
