@@ -1,0 +1,10 @@
+{
+  "name": "calistenia-netlify",
+  "version": "1.0.0",
+  "description": "App de calistenia (21 dias) com dieta e suporte por IA Gemini.",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  }
+}

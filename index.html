@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Calistenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Big+Shoulders+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rosa:#C8425C; --rosa-escuro:#A62F47; --rosa-claro:#D97286; --rosa-nevoa:#FCEFF2;
+    --grad:linear-gradient(90deg,#BE3B57 0%,#D75C74 100%);
+    --tinta:#17171C; --tinta-suave:#3B3B52; --cinza:#8E8E99; --linha:#ECECF0;
+    --fundo:#F5F5F7; --branco:#fff;
+    --vermelho:#E5364C; --verde:#10B981; --azul:#06AEE4; --amarelo:#F5BE22;
+    --sombra-1:0 1px 2px rgba(20,20,30,.05),0 6px 18px rgba(20,20,30,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:#e8e8ec;-webkit-font-smoothing:antialiased;color:var(--tinta)}
+  #phone{max-width:440px;margin:0 auto;min-height:100vh;background:var(--fundo);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+  .scroll{padding:20px 16px 96px;min-height:100vh}
+  h1,h2,h3,p{margin:0}
+  .screen-title{font-size:28px;font-weight:800;letter-spacing:-.02em}
+  .screen-sub{font-size:15px;color:var(--cinza);font-weight:500;margin-top:2px}
+  .label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza)}
+  .card{background:var(--branco);border-radius:18px;box-shadow:var(--sombra-1)}
+  .btn-primary{background:var(--grad);color:#fff;height:52px;border:none;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer;width:100%;transition:filter .15s}
+  .btn-primary:active{filter:brightness(1.07)}
+  .btn-primary:disabled{opacity:.45;cursor:default}
+  .btn-ghost{border:1px solid #E3E3E8;background:#fff;height:36px;padding:0 16px;border-radius:999px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--tinta-suave);font-family:inherit;cursor:pointer}
+  .chip{border:1px solid #E3E3E8;color:var(--tinta-suave);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
+  .chip.on{background:var(--grad);color:#fff;border-color:transparent}
+  .fade{animation:fade .28s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* tab bar */
+  #tabbar{position:sticky;bottom:0;max-width:440px;margin:0 auto;background:#fff;border-top:1px solid var(--linha);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(20,20,30,.04);position:fixed;left:0;right:0;bottom:0}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;cursor:pointer;color:#9A9AA5}
+  .tab .pill{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+  .tab span{font-size:11px;font-weight:600}
+  .tab.on{color:var(--rosa)}
+  .tab.on .pill{background:var(--rosa-nevoa)}
+  .tab.on span{font-weight:700}
+  input,select{font-family:inherit}
+</style>
+</head>
+<body>
+<div id="phone">
+  <div id="view" class="scroll"></div>
+</div>
+<nav id="tabbar"></nav>
+
+<script>
+/* ---------------- ICONS ---------------- */
+const I = {
+  home:'<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>',
+  dumbbell:'<path d="M6 8v8"/><path d="M18 8v8"/><path d="M3 10v4"/><path d="M21 10v4"/><path d="M6 12h12"/>',
+  diet:'<path d="M5 3v7a2 2 0 0 0 4 0V3"/><path d="M7 10v11"/><path d="M17 3c-2 2-2 5 0 6v12"/>',
+  chat:'<path d="M21 12a8 8 0 1 1-3.2-6.4L21 4l-1 4"/>',
+  user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-4 3-6 7-6s7 2 7 6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>',
+  flame:'<path d="M12 22c4-2 6-5 6-9 0-4-4-6-4-11-3 3-8 5-8 11 0 4 2 7 6 9z"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  chevR:'<polyline points="9 6 15 12 9 18"/>',
+  chevD:'<polyline points="6 9 12 15 18 9"/>',
+  trend:'<polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/>',
+  scale:'<path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 8l-2 6h4z"/><path d="M19 8l-2 6h4z"/>',
+  book:'<path d="M4 19V6a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/>',
+  gift:'<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M3 8l3-4h12l3 4"/>',
+  send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  spark:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',
+  leaf:'<path d="M20 4c-8 0-14 5-14 12 7 0 14-4 14-12z"/><path d="M6 20c0-4 3-8 8-10"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M3 11h18"/>',
+  back:'<line x1="20" y1="12" x2="4" y2="12"/><polyline points="10 6 4 12 10 18"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>',
+  search:'<circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>',
+  walk:'<circle cx="13" cy="4" r="2"/><path d="M7 21l3-6 2-3 3 2 2 1"/><path d="M12 12l-1-4 4 1 2 3"/>',
+};
+function svg(name,{s=18,c='currentColor',w=2}={}){return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${I[name]}</svg>`}
+
+/* ---------------- DATA ---------------- */
+const WEEKS=[
+  {n:1,name:'Adaptação',desc:'Aprender os movimentos e criar o hábito'},
+  {n:2,name:'Ativação',desc:'Aumentar o ritmo e a resistência'},
+  {n:3,name:'Intensificação',desc:'Consolidar força e definição'},
+];
+const EX_POOL=[
+  ['Círculos de Braço Garça','Movimento circular amplo dos braços para aquecer os ombros.','Ombros'],
+  ['Torção Rítmica em Pé','Rotação do tronco em pé, ativando toda a região do core.','Core'],
+  ['Agachamento Templo','Agachamento controlado com braços à frente, foco em pernas.','Pernas'],
+  ['Prancha das Pernas Cruzadas','Prancha com pernas cruzadas fortalecendo o core com estabilidade.','Core'],
+  ['Elevação de Joelhos','Elevação alternada dos joelhos, cardio leve e abdômen.','Abdômen'],
+  ['Flexão de Parede','Flexão apoiada na parede, ideal para iniciantes.','Peito'],
+  ['Ponte de Glúteos','Elevação do quadril deitado, ativando glúteos e lombar.','Glúteos'],
+  ['Marcha no Lugar','Marcha estacionária para elevar a frequência cardíaca.','Cardio'],
+  ['Superman','Deitado de bruços, eleva braços e pernas simultaneamente.','Lombar'],
+  ['Abdominal Curto','Contração abdominal curta e controlada.','Abdômen'],
+  ['Afundo Alternado','Passada à frente descendo o joelho, foco em pernas.','Pernas'],
+  ['Prancha Lateral','Apoio lateral que trabalha os oblíquos.','Oblíquos'],
+  ['Polichinelo Suave','Polichinelo de baixo impacto para cardio.','Cardio'],
+  ['Rotação de Ombros','Rotação lenta dos ombros para mobilidade.','Ombros'],
+  ['Elevação de Panturrilha','Subida na ponta dos pés, fortalece panturrilhas.','Pernas'],
+  ['Alongamento Gato-Vaca','Mobilidade da coluna alternando arqueamento.','Coluna'],
+];
+function dayExercises(dayIdx){
+  const out=[];
+  for(let i=0;i<10;i++){out.push(EX_POOL[(dayIdx*3+i)%EX_POOL.length]);}
+  return out;
+}
+function totalDay(week,day){return (week-1)*7+day;} // 1..21
+
+const FOOD_GROUPS=[
+  {emoji:'🥩',name:'Carnes',items:['Frango','Carne Bovina','Carne Suína','Peixe','Camarão','Peru','Pato','Cordeiro']},
+  {emoji:'🥚',name:'Ovos e Laticínios',items:['Ovos','Leite','Queijo','Iogurte','Manteiga','Requeijão']},
+  {emoji:'🫘',name:'Leguminosas',items:['Feijão Preto','Feijão Carioca','Lentilha','Grão-de-bico','Ervilha','Soja','Feijão Branco']},
+  {emoji:'🥦',name:'Vegetais',items:['Brócolis','Cenoura','Alface','Tomate','Espinafre','Abobrinha','Couve','Pepino']},
+  {emoji:'🍎',name:'Frutas',items:['Banana','Maçã','Laranja','Morango','Abacate','Melancia','Uva','Manga']},
+];
+const RESTRICOES=['Vegetariano','Vegano','Sem Glúten','Sem Lactose','Low Carb','Diabético'];
+const FAQ=['Como acelerar o emagrecimento?','Posso treinar com dor muscular?','Quantos litros de água devo beber?','Como manter a motivação?'];
+const FAQ_A={
+  'Como acelerar o emagrecimento?':'Combine o treino diário com uma alimentação equilibrada e boa hidratação. Se quiser, adicione uma atividade extra leve, como caminhada. Mas sem pressa — consistência vale mais que intensidade. 🌱',
+  'Posso treinar com dor muscular?':'Dor leve é normal nos primeiros dias. Respeite seu corpo: se for um desconforto forte, descanse. O treino de hoje já é suficiente.',
+  'Quantos litros de água devo beber?':'Uma boa referência é cerca de 35ml por quilo de peso ao dia. Mantenha uma garrafinha por perto e beba ao longo do dia.',
+  'Como manter a motivação?':'Celebre cada pequeno passo. Você nunca está atrasado — está no seu dia. Marcar o treino concluído todos os dias cria o hábito. Você consegue! 💪',
+};
+
+/* ---------------- STATE ---------------- */
+const DEFAULT={
+  name:'anjinha', done:{}, minutes:0, metaPeso:80,
+  perfil:{idade:22,altura:165,peso:30,meta:80,prazo:32},
+  restricoes:{'Sem Lactose':true},
+  foods:{'Carnes':['Frango','Carne Bovina','Carne Suína','Peixe','Camarão','Peru','Pato','Cordeiro'],'Ovos e Laticínios':['Queijo','Iogurte','Requeijão'],'Leguminosas':['Feijão Preto']},
+  chat:[{r:'bot',t:'Olá! Sou a assistente Atlas. 🌱 Estou aqui para ajudar com qualquer dúvida sobre treinos, dieta, bem-estar ou o aplicativo. Pode me perguntar o que quiser! Como posso te ajudar hoje?'}],
+  msgsLeft:5,
+};
+let S=load();
+function load(){try{const s=JSON.parse(localStorage.getItem('calistenia'));return s?{...structuredClone(DEFAULT),...s}:structuredClone(DEFAULT)}catch(e){return structuredClone(DEFAULT)}}
+function save(){localStorage.setItem('calistenia',JSON.stringify(S))}
+function doneCount(){return Object.values(S.done).filter(Boolean).length}
+function progressPct(){return Math.round(doneCount()/21*100)}
+function nextDay(){for(let d=1;d<=21;d++){if(!S.done[d])return d}return 21}
+
+/* ---------------- ROUTER ---------------- */
+let route={tab:'home',sub:null,data:null};
+function go(tab,sub,data){route={tab,sub:sub||null,data:data||null};render()}
+const TABS=[['home','Início','home'],['treinos','Treinos','dumbbell'],['dieta','Dieta','diet'],['suporte','Suporte','chat'],['perfil','Perfil','user']];
+
+function render(){
+  const v=document.getElementById('view');
+  let html='';
+  if(route.sub==='workout') html=viewWorkout(route.data);
+  else if(route.sub==='plano') html=viewPlano();
+  else if(route.sub==='program') html=viewProgram();
+  else if(route.sub==='exercises') html=viewAllExercises();
+  else if(route.sub==='philosophy') html=viewPhilosophy();
+  else if(route.tab==='home') html=viewHome();
+  else if(route.tab==='treinos') html=viewTreinos();
+  else if(route.tab==='dieta') html=viewDieta();
+  else if(route.tab==='suporte') html=viewSuporte();
+  else if(route.tab==='perfil') html=viewPerfil();
+  v.innerHTML='<div class="fade">'+html+'</div>';
+  v.scrollTop=0; document.getElementById('phone').scrollTop=0; window.scrollTo(0,0);
+  renderTabs();
+  if(route.tab==='suporte'&&!route.sub){const c=document.getElementById('chatScroll');if(c)c.scrollTop=c.scrollHeight;}
+}
+function renderTabs(){
+  document.getElementById('tabbar').innerHTML=TABS.map(([id,label,ic])=>
+    `<div class="tab ${route.tab===id&&!route.sub?'on':''}" onclick="go('${id}')">
+      <span class="pill">${svg(ic,{s:18})}</span><span>${label}</span></div>`).join('');
+}
+
+/* ---------------- HOME ---------------- */
+function viewHome(){
+  const nd=nextDay(), w=WEEKS[Math.floor((nd-1)/7)], dayInWeek=((nd-1)%7)+1;
+  const ex=dayExercises(nd-1);
+  const pct=progressPct();
+  return `
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px">
+    <span style="font-family:'Big Shoulders Display';font-weight:800;font-size:26px;color:var(--rosa);letter-spacing:1px">CALISTENIA</span>
+    <span style="font-size:11px;font-weight:600;color:var(--cinza);background:var(--rosa-nevoa);padding:3px 8px;border-radius:999px">by Atlas</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="width:44px;height:44px;border-radius:999px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff">${svg('user',{s:22})}</div>
+    <div><div style="font-size:14px;color:var(--cinza)">Olá,</div><div style="font-size:20px;font-weight:800">${S.name} 🌸</div></div>
+  </div>
+  <div style="background:var(--rosa-nevoa);border-radius:14px;padding:13px 16px;font-size:14px;font-weight:600;color:var(--rosa-escuro);display:flex;gap:8px;align-items:center;margin-bottom:16px">
+    ${svg('spark',{s:16})} Cada dia é uma nova conquista! 🌸
+  </div>
+  <div class="card" style="padding:18px;display:flex;align-items:center;gap:18px;margin-bottom:16px">
+    <div style="width:80px;height:80px;border-radius:999px;background:conic-gradient(var(--rosa) 0deg ${pct*3.6}deg,#F3E3E7 ${pct*3.6}deg 360deg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <div style="width:64px;height:64px;border-radius:999px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <span style="font-size:22px;font-weight:800;line-height:1">${doneCount()}</span><span style="font-size:12px;color:var(--cinza);font-weight:600">/21</span></div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:17px;font-weight:800">Programa 21 Dias</div>
+      <div style="font-size:14px;color:#B98A2E;font-weight:600;margin-top:2px">${pct===0?'Comece sua jornada hoje!':pct===100?'Programa concluído! 🎉':'Continue sua jornada!'}</div>
+      <div style="height:8px;border-radius:999px;background:#EFEFF2;margin-top:12px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--grad)"></div></div>
+    </div>
+  </div>
+  <!-- today workout -->
+  <div class="card" style="overflow:hidden;margin-bottom:22px">
+    <div style="background:linear-gradient(120deg,#BE3B57 0%,#D0566E 100%);padding:20px;color:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="label" style="color:#fff;opacity:.9">Treino de hoje</div>
+        <div style="background:rgba(255,255,255,.22);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px">Dia ${nd}</div>
+      </div>
+      <div style="font-size:21px;font-weight:800;margin-top:14px">Semana ${w.n} — ${w.name}</div>
+      <div style="font-size:14px;opacity:.9;margin-top:4px">${w.desc}</div>
+    </div>
+    <div style="padding:16px 20px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:16px;font-size:13px;color:var(--cinza);font-weight:600">
+        <span style="display:flex;align-items:center;gap:5px">${svg('clock',{s:13})} 15 min</span>
+        <span style="display:flex;align-items:center;gap:5px">${svg('flame',{s:13})} 10 exercícios</span>
+      </div>
+      ${ex.slice(0,3).map((e,i)=>`<div style="background:#F7F7F9;border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--tinta-suave)"><span style="width:24px;height:24px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">${i+1}</span>${e[0]}</div>`).join('')}
+      <div style="font-size:13px;color:var(--rosa);font-weight:700;padding-left:4px">+7 exercícios…</div>
+      <button class="btn-primary" style="height:48px;margin-top:6px" onclick="go('treinos','workout',${nd})">${svg('play',{s:15,w:2.4})} Iniciar Treino</button>
+    </div>
+  </div>
+  <div style="font-size:19px;font-weight:800;margin-bottom:14px">Minhas Estatísticas</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    ${statCard('var(--vermelho)','#fff','TREINOS',doneCount(),'Concluídos','flame')}
+    ${statCard('var(--verde)','#fff','PROGRESSO',pct+'%','Do programa','trend')}
+    ${statCard('var(--azul)','#fff','TEMPO',S.minutes,'Minutos treinados','clock')}
+    ${statCard('var(--amarelo)','#3A2A00','META',S.metaPeso+'kg','Peso desejado','scale')}
+  </div>
+  <div class="card" style="overflow:hidden">
+    ${listRow('walk','Atividade Extra','Acelere seus resultados (opcional)',()=>alert('Adicione uma atividade extra leve — caminhada, bike ou corrida. Se não, o treino principal já é suficiente. 🌱'))}
+    ${listRow('book','Filosofia do Treino','Entenda nossa metodologia',null,"go('home','philosophy')")}
+    ${listRow('gift','Bônus e Conteúdos','Materiais extras exclusivos',null,"alert('Conteúdos bônus em breve! 🎁')",true)}
+  </div>`;
+}
+function statCard(bg,fg,label,val,sub,ic){
+  return `<div style="background:${bg};border-radius:16px;padding:18px;color:${fg};display:flex;justify-content:space-between;align-items:flex-start;min-height:104px">
+    <div><div style="font-size:11px;font-weight:800;letter-spacing:.1em;opacity:.9">${label}</div><div style="font-size:30px;font-weight:800;margin-top:16px">${val}</div><div style="font-size:12px;opacity:.9">${sub}</div></div>
+    ${svg(ic,{s:26,c:fg==='#fff'?'rgba(255,255,255,.55)':'rgba(58,42,0,.4)',w:1.8})}</div>`;
+}
+function listRow(ic,title,sub,fn,onclick,last){
+  return `<div onclick="${onclick||''}" style="padding:16px 18px;display:flex;align-items:center;gap:14px;${last?'':'border-bottom:1px solid #F2F2F5'};cursor:pointer" ${fn?'':''}>
+    <span style="width:40px;height:40px;border-radius:12px;background:var(--rosa-nevoa);color:var(--rosa);display:flex;align-items:center;justify-content:center">${svg(ic,{s:19,w:1.8})}</span>
+    <div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${title}</div><div style="font-size:13px;color:var(--cinza)">${sub}</div></div>
+    ${svg('chevR',{s:18,c:'#B9B9C2'})}</div>`;
+}
+
+/* ---------------- TREINOS ---------------- */
+let openWeek=1;
+function viewTreinos(){
+  return `
+  <div style="margin-bottom:16px"><div class="screen-title">Treinos</div><div class="screen-sub">Programa completo de 21 dias</div></div>
+  <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px">
+    <div class="chip" onclick="go('treinos','program')">${svg('cal',{s:15,c:'var(--rosa)'})} Ver Programa</div>
+    <div class="chip" onclick="go('treinos','exercises')">🧹 Todos Exercícios</div>
+    <div class="chip" onclick="go('home','philosophy')">🔥 Filosofia</div>
+  </div>
+  ${WEEKS.map(w=>weekBlock(w)).join('')}
+  <div style="background:#FBE9D5;border-radius:14px;padding:16px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="alert('Atividades extras: caminhada, bike ou corrida para acelerar resultados. Totalmente opcional. 🌱')">
+    <div><div style="font-size:15px;font-weight:800;color:#A9702A">Atividades Extras</div><div style="font-size:13px;color:#A9702A;opacity:.85">Caminhada, bike ou corrida para acelerar resultados</div></div>
+    ${svg('chevR',{s:18,c:'#A9702A'})}</div>`;
+}
+function weekBlock(w){
+  const open=openWeek===w.n;
+  const nd=nextDay();
+  let inner='';
+  if(open){
+    for(let d=1;d<=7;d++){
+      const total=totalDay(w.n,d), done=S.done[total], active=total===nd;
+      inner+=`<div style="border:${active?'1.5px solid var(--rosa)':'1px solid #F0F0F3'};border-radius:14px;padding:14px 16px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;${active?'background:#fff':''}">
+        <div><div class="label" style="color:var(--cinza)">Semana ${w.n} — ${w.name}</div>
+        <div style="font-size:17px;font-weight:800;margin-top:2px">Dia ${d} ${done?'✅':''}</div>
+        <div style="font-size:13px;color:var(--cinza);margin-top:4px;display:flex;gap:12px"><span>${svg('clock',{s:12})} 15 min</span><span>${svg('flame',{s:12})} 10 exercícios</span></div></div>
+        ${active
+          ?`<button class="btn-primary" style="width:auto;height:40px;padding:0 20px;font-size:14px" onclick="go('treinos','workout',${total})">${svg('play',{s:14,w:2.4})} Iniciar</button>`
+          :`<button class="btn-ghost" onclick="go('treinos','workout',${total})">${svg('play',{s:13,w:2.4})} Ver</button>`}
+      </div>`;
+    }
+  }
+  const doneInWeek=[1,2,3,4,5,6,7].filter(d=>S.done[totalDay(w.n,d)]).length;
+  return `<div class="card" style="padding:14px 16px;margin-bottom:14px">
+    <div onclick="openWeek=${open?0:w.n};render()" style="display:flex;align-items:center;gap:14px;cursor:pointer">
+      <span style="width:36px;height:36px;border-radius:999px;background:${open?'var(--grad)':'#F0F0F3'};color:${open?'#fff':'var(--cinza)'};display:flex;align-items:center;justify-content:center;font-weight:800">${w.n}</span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:800">Semana ${w.n}</div><div style="font-size:13px;color:var(--cinza)">${w.name} · ${doneInWeek}/7</div></div>
+      ${svg(open?'chevD':'chevR',{s:18,c:'#B9B9C2'})}
+    </div>${inner}</div>`;
+}
+
+/* ---------------- WORKOUT PLAYER ---------------- */
+function viewWorkout(dayTotal){
+  const w=WEEKS[Math.floor((dayTotal-1)/7)], dayInWeek=((dayTotal-1)%7)+1;
+  const ex=dayExercises(dayTotal-1), done=S.done[dayTotal];
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('treinos')">
+    ${svg('back',{s:20,c:'var(--tinta-suave)'})}
+    <div><div style="font-size:19px;font-weight:800">Semana ${w.n} · Dia ${dayInWeek}</div><div style="font-size:13px;color:var(--cinza)">${w.name} — 15 min · 10 exercícios</div></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+  ${ex.map((e,i)=>`<div class="card" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
+    <span style="width:28px;height:28px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i+1}</span>
+    <div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div>
+    <div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div>
+    <div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span> <span style="background:var(--rosa-nevoa);color:var(--rosa);padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700">3 × 30s</span></div></div>
+  </div>`).join('')}
+  </div>
+  <button class="btn-primary" ${done?'disabled':''} onclick="completeWorkout(${dayTotal})">${done?svg('check',{s:17,w:2.4})+' Treino concluído':svg('check',{s:17,w:2.4})+' Marcar como Concluída'}</button>`;
+}
+function completeWorkout(d){
+  if(S.done[d])return;
+  S.done[d]=true; S.minutes+=15; save();
+  const pct=progressPct();
+  go('treinos');
+  setTimeout(()=>alert(pct===100?'Parabéns! Você concluiu o programa de 21 dias! 🎉🌸':'Treino concluído! Cada dia é uma nova conquista. 🌸'),60);
+}
+
+/* ---------- program / exercises / philosophy sub-screens ---------- */
+function viewProgram(){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('treinos')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Programa 21 Dias</div><div style="font-size:13px;color:var(--cinza)">3 semanas de evolução</div></div></div>
+  ${WEEKS.map(w=>`<div class="card" style="padding:18px;margin-bottom:14px">
+    <div class="label" style="color:var(--rosa)">Semana ${w.n}</div>
+    <div style="font-size:18px;font-weight:800;margin-top:4px">${w.name}</div>
+    <div style="font-size:14px;color:var(--cinza);line-height:1.55;margin-top:6px">${w.desc}. 7 dias de treino, 15 minutos cada.</div>
+  </div>`).join('')}`;
+}
+function viewAllExercises(){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer" onclick="go('treinos')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Todos os Exercícios</div><div style="font-size:13px;color:var(--cinza)">${EX_POOL.length} exercícios disponíveis</div></div></div>
+  <div class="card" style="border-radius:999px;height:48px;display:flex;align-items:center;gap:10px;padding:0 16px;color:#A9A9B4;font-size:15px;box-shadow:none;border:1px solid #E3E3E8;margin-bottom:16px">${svg('search',{s:16})} Buscar exercício ou grupo muscular…</div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+  ${EX_POOL.map((e,i)=>`<div class="card" style="padding:14px 16px"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div><div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div><div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span></div></div>`).join('')}
+  </div>`;
+}
+function viewPhilosophy(){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('home')">${svg('back',{s:20})}<div style="font-size:19px;font-weight:800">Filosofia do Treino</div></div>
+  <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px">
+    <div style="font-size:17px;font-weight:800;color:var(--rosa)">Uma decisão por dia</div>
+    <p style="font-size:15px;color:var(--tinta-suave);line-height:1.6">A calistenia usa o peso do próprio corpo. Sem equipamentos, sem academia — só você, 15 minutos por dia e consistência.</p>
+    <div style="height:1px;background:var(--linha)"></div>
+    <p style="font-size:15px;color:var(--tinta-suave);line-height:1.6">Nosso método celebra o pequeno passo. Você nunca está atrasado — está no seu dia. Sem culpa, sem competição tóxica, sem prazos rígidos.</p>
+    <div style="background:var(--rosa-nevoa);border-radius:12px;padding:14px 16px;font-size:14px;font-weight:600;color:var(--rosa-escuro)">Se quiser acelerar, adicione uma atividade extra. Se não, o treino principal já é suficiente.</div>
+  </div>`;
+}
+
+/* ---------------- DIETA ---------------- */
+function viewDieta(){
+  const p=S.perfil;
+  return `
+  <div style="margin-bottom:16px"><div class="screen-title">Dieta Personalizada</div><div class="screen-sub">Alimentação gerada por IA para seus objetivos</div></div>
+  <div style="border:1px solid #F3C9D2;background:#FDF4F6;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <span style="width:34px;height:34px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);display:flex;align-items:center;justify-content:center">${svg('leaf',{s:16,w:1.8})}</span>
+    <div><div style="font-size:15px;font-weight:700;color:var(--tinta-suave)">🌱 Plano Light</div><div style="font-size:13px;color:var(--cinza)">Você pode gerar mais 1 dieta</div></div>
+  </div>
+  <div class="card" style="overflow:hidden;margin-bottom:14px">
+    ${listRow('leaf','Seu Plano Alimentar','Cardápio personalizado',null,"alert('Preencha seus dados e gere sua dieta abaixo. 🌱')")}
+    ${listRow('book','Receitas','Pratos saudáveis e fáceis',null,"alert('Receitas saudáveis em breve! 🍎',true)",true)}
+  </div>
+
+  <div class="card" style="padding:20px;margin-bottom:14px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px">Seus Dados</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${field('Idade','idade',p.idade)}
+      ${field('Altura (cm)','altura',p.altura)}
+      ${field('Peso Atual (kg)','peso',p.peso)}
+      ${field('Peso Meta (kg)','meta',p.meta)}
+    </div>
+    <div style="margin-top:12px">${field('Prazo desejado (dias)','prazo',p.prazo,true)}</div>
+  </div>
+
+  <div class="card" style="padding:20px;margin-bottom:14px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px">Restrições Alimentares</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${RESTRICOES.map(r=>selRow(r,S.restricoes[r],`toggleRestricao('${r}')`)).join('')}
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;margin-bottom:16px">
+    <div style="font-size:16px;font-weight:800">Grupos Alimentares</div>
+    <div style="font-size:13px;color:var(--cinza);margin:4px 0 14px">Selecione os alimentos que você gosta e quer incluir na sua dieta</div>
+    ${FOOD_GROUPS.map(g=>foodGroup(g)).join('')}
+  </div>
+
+  <button class="btn-primary" onclick="gerarDieta()">${svg('spark',{s:16})} Gerar Minha Dieta</button>`;
+}
+function field(label,key,val,full){
+  return `<div style="${full?'grid-column:1/-1':''}"><div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:6px">${label}</div>
+  <input type="number" value="${val}" onchange="setPerfil('${key}',this.value)" style="width:100%;border:1px solid #E3E3E8;background:#FAFAFB;border-radius:10px;height:44px;padding:0 14px;font-size:15px;font-weight:600;color:var(--tinta-suave);outline:none" onfocus="this.style.borderColor='var(--rosa)';this.style.background='#fff'" onblur="this.style.borderColor='#E3E3E8'"></div>`;
+}
+function selRow(label,on,onclick){
+  return `<div onclick="${onclick}" style="border:${on?'1.5px solid var(--rosa)':'1px solid #E3E3E8'};background:${on?'#FDF4F6':'#fff'};border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:${on?700:600};color:${on?'var(--rosa-escuro)':'var(--tinta-suave)'};cursor:pointer">
+    <span style="width:16px;height:16px;border-radius:999px;${on?'background:var(--rosa);color:#fff':'border:1.5px solid #C9C9D2'};display:flex;align-items:center;justify-content:center">${on?svg('check',{s:10,w:4}):''}</span>${label}</div>`;
+}
+function foodGroup(g){
+  const sel=S.foods[g.name]||[];
+  const all=sel.length===g.items.length;
+  return `<div style="border:1px solid #F0F0F3;border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">${g.emoji}</span><div><div style="font-size:15px;font-weight:700">${g.name}</div><div style="font-size:12px;color:var(--cinza)">${sel.length} de ${g.items.length} selecionados</div></div></div>
+      <div onclick="toggleAll('${g.name}')" style="font-size:13px;font-weight:700;color:var(--rosa);cursor:pointer">${all?'Desmarcar':'Marcar todos'}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${g.items.map(it=>selRow(it,sel.includes(it),`toggleFood('${g.name}','${it}')`)).join('')}
+    </div></div>`;
+}
+function setPerfil(k,v){S.perfil[k]=Number(v)||0;if(k==='meta'){S.metaPeso=Number(v)||0}save()}
+function toggleRestricao(r){S.restricoes[r]=!S.restricoes[r];save();render()}
+function toggleFood(g,it){const a=S.foods[g]||(S.foods[g]=[]);const i=a.indexOf(it);i>=0?a.splice(i,1):a.push(it);save();render()}
+function toggleAll(g){const grp=FOOD_GROUPS.find(x=>x.name===g);const sel=S.foods[g]||[];S.foods[g]=sel.length===grp.items.length?[]:[...grp.items];save();render()}
+async function gerarDieta(){
+  const p=S.perfil, diff=p.peso-p.meta;
+  const restr=Object.keys(S.restricoes).filter(k=>S.restricoes[k]);
+  const foods=Object.values(S.foods).flat();
+  const prompt=`Monte um plano alimentar de 1 dia para esta pessoa.
+Idade: ${p.idade} anos. Altura: ${p.altura} cm. Peso atual: ${p.peso} kg. Peso meta: ${p.meta} kg. Prazo desejado: ${p.prazo} dias.
+Restrições alimentares: ${restr.length?restr.join(', '):'nenhuma'}.
+Alimentos que a pessoa gosta e quer incluir: ${foods.length?foods.join(', '):'variados'}.
+Estime uma meta calórica diária adequada e saudável (nunca abaixo de 1200 kcal). Depois liste um cardápio com Café da manhã, Lanche, Almoço, Lanche da tarde e Jantar, usando principalmente os alimentos preferidos e respeitando as restrições.
+Formato: comece com "Meta calórica: ~X kcal/dia", depois o cardápio em tópicos curtos. Encerre com uma frase de incentivo curta.`;
+  showLoader('Gerando sua dieta com a IA Atlas… 🌱');
+  try{
+    const txt=await callAI(prompt);
+    S.ultimaDieta=txt; save();
+    hideLoader(); go('dieta','plano');
+  }catch(e){ hideLoader(); alert('Não consegui gerar agora: '+e.message); }
+}
+function viewPlano(){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('dieta')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Seu Plano Alimentar</div><div style="font-size:13px;color:var(--cinza)">Gerado por IA para seus objetivos</div></div></div>
+  <div class="card" style="padding:22px;font-size:15px;line-height:1.65;color:var(--tinta-suave);white-space:pre-wrap">${(S.ultimaDieta||'').replace(/</g,'&lt;')}</div>
+  <button class="btn-primary" style="margin-top:16px" onclick="go('dieta')">${svg('check',{s:16,w:2.4})} Entendi</button>`;
+}
+
+/* ---------------- SUPORTE ---------------- */
+function viewSuporte(){
+  return `
+  <div style="margin-bottom:14px"><div class="screen-title">Suporte 24h</div><div class="screen-sub">Tire suas dúvidas com a IA Atlas</div></div>
+  <div class="card" style="padding:16px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700">${svg('leaf',{s:18,c:'var(--rosa)',w:1.8})} Plano Lite</div>
+    <div style="font-size:14px;color:var(--cinza)">${S.msgsLeft}/5 mensagens restantes hoje</div>
+  </div>
+  <div style="font-size:15px;font-weight:600;color:var(--cinza);margin-bottom:10px">Perguntas frequentes:</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+    ${FAQ.map(q=>`<div onclick="sendMsg('${q.replace(/'/g,"\\'")}')" style="background:#fff;border:1px solid #F0F0F3;border-radius:999px;padding:14px 18px;font-size:15px;color:var(--tinta-suave);cursor:pointer">${q}</div>`).join('')}
+  </div>
+  <div id="chatScroll" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+    ${S.chat.map(m=>bubble(m)).join('')}
+  </div>
+  <div style="display:flex;gap:10px;position:sticky;bottom:0;background:var(--fundo);padding:6px 0">
+    <input id="chatInput" placeholder="Digite sua dúvida…" onkeydown="if(event.key==='Enter')sendFromInput()" style="flex:1;border:1px solid #E3E3E8;border-radius:999px;height:48px;padding:0 18px;font-size:15px;outline:none;background:#fff">
+    <button onclick="sendFromInput()" style="width:48px;height:48px;border:none;border-radius:999px;background:var(--rosa-claro);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">${svg('send',{s:19})}</button>
+  </div>`;
+}
+function bubble(m){
+  if(m.r==='bot') return `<div style="display:flex;gap:10px;align-items:flex-start">
+    <span style="width:34px;height:34px;border-radius:999px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${svg('leaf',{s:16,w:1.8})}</span>
+    <div class="card" style="padding:14px 16px;font-size:15px;line-height:1.5;color:var(--tinta-suave)">${m.t}</div></div>`;
+  return `<div style="display:flex;justify-content:flex-end"><div style="background:var(--grad);color:#fff;padding:12px 16px;border-radius:16px;border-bottom-right-radius:4px;font-size:15px;line-height:1.5;max-width:80%">${m.t}</div></div>`;
+}
+function sendFromInput(){const el=document.getElementById('chatInput');const t=el.value.trim();if(t){el.value='';sendMsg(t)}}
+async function sendMsg(t){
+  if(S.msgsLeft<=0){alert('Você atingiu o limite de mensagens de hoje no Plano Lite. Volte amanhã! 🌱');return}
+  S.chat.push({r:'me',t});
+  S.msgsLeft--; save();
+  S.chat.push({r:'bot',t:'…',pending:true}); render();
+  try{
+    const ans=await callAI(t);
+    S.chat[S.chat.length-1]={r:'bot',t:ans};
+  }catch(e){
+    S.chat[S.chat.length-1]={r:'bot',t:'Ops, não consegui responder agora ('+e.message+'). Tente de novo em instantes. 🌱'};
+  }
+  save(); render();
+}
+
+/* ---------------- PERFIL ---------------- */
+function viewPerfil(){
+  const p=S.perfil;
+  return `
+  <div style="margin-bottom:16px"><div class="screen-title">Perfil</div><div class="screen-sub">Seus dados e progresso</div></div>
+  <div class="card" style="padding:22px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="width:72px;height:72px;border-radius:999px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff">${svg('user',{s:34})}</div>
+    <input value="${S.name}" onchange="S.name=this.value.trim()||'anjinha';save()" style="text-align:center;font-size:20px;font-weight:800;border:none;outline:none;background:transparent;width:100%">
+    <div style="font-size:13px;color:var(--cinza)">Plano Light · membro Calistenia</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+    ${miniStat(doneCount(),'Treinos')}${miniStat(21-doneCount(),'Restantes')}${miniStat(progressPct()+'%','Progresso')}
+  </div>
+  <div class="card" style="padding:20px;margin-bottom:16px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px">Meus Dados</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${field('Idade','idade',p.idade)}${field('Altura (cm)','altura',p.altura)}
+      ${field('Peso Atual (kg)','peso',p.peso)}${field('Peso Meta (kg)','meta',p.meta)}
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden;margin-bottom:16px">
+    ${listRow('book','Filosofia do Treino','Entenda nossa metodologia',null,"go('home','philosophy')")}
+    ${listRow('gift','Bônus e Conteúdos','Materiais extras exclusivos',null,"alert('Em breve! 🎁')",true)}
+  </div>
+  <div onclick="resetar()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--rosa);font-weight:700;font-size:15px;padding:14px;cursor:pointer">${svg('trash',{s:16})} Resetar Progresso</div>`;
+}
+function miniStat(v,l){return `<div class="card" style="padding:16px 8px;text-align:center"><div style="font-size:24px;font-weight:800${l==='Progresso'?';color:var(--rosa)':''}">${v}</div><div style="font-size:12px;color:var(--cinza);font-weight:600">${l}</div></div>`}
+function resetar(){if(confirm('Resetar todo o seu progresso? Isso apaga treinos concluídos e minutos. Seus dados de perfil e dieta permanecem.')){S.done={};S.minutes=0;save();alert('Progresso resetado. Um novo começo! 🌱');go('home')}}
+
+/* ---------------- IA (Gemini via função Netlify) ---------------- */
+async function callAI(prompt){
+  const r=await fetch('/.netlify/functions/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.error||'Erro na IA');
+  return d.text;
+}
+function showLoader(txt){
+  let el=document.getElementById('loader');
+  if(!el){el=document.createElement('div');el.id='loader';el.style.cssText='position:fixed;inset:0;background:rgba(23,23,28,.45);display:flex;align-items:center;justify-content:center;z-index:99';document.body.appendChild(el);}
+  el.innerHTML=`<div style="background:#fff;border-radius:18px;padding:26px 30px;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:80%">
+    <div style="width:34px;height:34px;border:3px solid var(--rosa-nevoa);border-top-color:var(--rosa);border-radius:999px;animation:spin .8s linear infinite"></div>
+    <div style="font-size:15px;font-weight:600;color:var(--tinta-suave);text-align:center">${txt}</div></div>`;
+  el.style.display='flex';
+}
+function hideLoader(){const el=document.getElementById('loader');if(el)el.style.display='none';}
+const _spin=document.createElement('style');_spin.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(_spin);
+
+render();
+</script>
+</body>
+</html>
