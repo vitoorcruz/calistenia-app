@@ -140,6 +140,7 @@ const DEFAULT={
   foods:{'Carnes':['Frango','Carne Bovina','Carne Suína','Peixe','Camarão','Peru','Pato','Cordeiro'],'Ovos e Laticínios':['Queijo','Iogurte','Requeijão'],'Leguminosas':['Feijão Preto']},
   chat:[{r:'bot',t:'Olá! Sou a assistente Atlas. 🌱 Estou aqui para ajudar com qualquer dúvida sobre treinos, dieta, bem-estar ou o aplicativo. Pode me perguntar o que quiser! Como posso te ajudar hoje?'}],
   msgsLeft:5,
+  extras:[],
 };
 let S=load();
 function load(){try{const s=JSON.parse(localStorage.getItem('calistenia'));return s?{...structuredClone(DEFAULT),...s}:structuredClone(DEFAULT)}catch(e){return structuredClone(DEFAULT)}}
@@ -400,24 +401,74 @@ function viewPhilosophy(){
     <div style="font-size:13px;font-weight:700;color:#A9702A;margin-top:10px">— Filosofia Atlas</div>
   </div>`;
 }
+const ATIVS=[
+  ['🚶','Caminhada','20–40 min em ritmo leve. Ótima para recuperação ativa.','#10B981'],
+  ['🚴','Bike','Pedalar 20–30 min melhora o condicionamento sem impacto.','#06AEE4'],
+  ['🏃','Corrida Leve','15–20 min de trote no seu ritmo, sem forçar.','#E5364C'],
+  ['🏊','Natação','O exercício mais completo e gentil com as articulações.','#7B61FF'],
+  ['🧘','Alongamento','10 min ao acordar ou antes de dormir. Solta o corpo.','#F5BE22'],
+  ['🕺','Dança','Coloque uma música e se mexa. Queima calorias e anima o dia.','#C8425C'],
+];
+function isToday(ts){const d=new Date(ts),n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
+function tempoRel(ts){const min=Math.floor((Date.now()-ts)/60000);
+  if(min<1)return'agora';if(min<60)return`há ${min} min`;
+  const h=Math.floor(min/60);if(isToday(ts))return`hoje ${new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+  const dias=Math.floor(min/1440);return dias<=1?'ontem':`há ${dias} dias`;}
 function viewExtras(){
-  const ativs=[
-    ['🚶','Caminhada','20–40 min em ritmo leve. Ótima para recuperação ativa.','#10B981'],
-    ['🚴','Bike','Pedalar 20–30 min melhora o condicionamento sem impacto.','#06AEE4'],
-    ['🏃','Corrida Leve','15–20 min de trote no seu ritmo, sem forçar.','#E5364C'],
-    ['🏊','Natação','O exercício mais completo e gentil com as articulações.','#7B61FF'],
-    ['🧘','Alongamento','10 min ao acordar ou antes de dormir. Solta o corpo.','#F5BE22'],
-    ['🕺','Dança','Coloque uma música e se mexa. Queima calorias e anima o dia.','#C8425C'],
-  ];
+  const log=S.extras||[];
+  const hoje=log.filter(x=>isToday(x.ts));
+  const minHoje=hoje.reduce((a,x)=>a+x.min,0);
+  const minTotal=log.reduce((a,x)=>a+x.min,0);
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;cursor:pointer" onclick="go('home')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Atividades Extras</div><div style="font-size:13px;color:var(--cinza)">Acelere seus resultados</div></div></div>
-  <div style="background:var(--rosa-nevoa);border-radius:16px;padding:16px;font-size:14px;font-weight:600;color:var(--rosa-escuro);line-height:1.5;margin-bottom:16px">Totalmente opcional 🌱 — se quiser acelerar, escolha uma atividade leve abaixo. Se não, o treino principal já é suficiente.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+    <div class="card" style="padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:800">${hoje.length}</div><div style="font-size:12px;color:var(--cinza);font-weight:600">Hoje</div></div>
+    <div class="card" style="padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:800;color:var(--rosa)">${minHoje}</div><div style="font-size:12px;color:var(--cinza);font-weight:600">Min hoje</div></div>
+    <div class="card" style="padding:14px 8px;text-align:center"><div style="font-size:24px;font-weight:800">${minTotal}</div><div style="font-size:12px;color:var(--cinza);font-weight:600">Min total</div></div>
+  </div>
+  <div style="background:var(--rosa-nevoa);border-radius:16px;padding:16px;font-size:14px;font-weight:600;color:var(--rosa-escuro);line-height:1.5;margin-bottom:16px">Totalmente opcional 🌱 — fez uma atividade? Toque em <strong>Registrar</strong> e informe quantos minutos. Se não, o treino principal já é suficiente.</div>
   <div style="display:flex;flex-direction:column;gap:12px">
-    ${ativs.map(a=>`<div class="card" style="padding:16px;display:flex;gap:14px;align-items:flex-start">
+    ${ATIVS.map((a,i)=>`<div class="card" style="padding:16px;display:flex;gap:14px;align-items:center">
       <span style="width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(145deg,${rgba(a[3],.16)},${rgba(a[3],.05)});box-shadow:inset 0 0 0 1px ${rgba(a[3],.12)}">${a[0]}</span>
-      <div><div style="font-size:16px;font-weight:800;color:var(--tinta-suave)">${a[1]}</div><div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:2px">${a[2]}</div></div>
+      <div style="flex:1"><div style="font-size:16px;font-weight:800;color:var(--tinta-suave)">${a[1]}</div><div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:2px">${a[2]}</div></div>
+      <button class="btn-primary" style="width:auto;height:38px;padding:0 16px;font-size:14px;flex-shrink:0" onclick="openExtra(${i})">Registrar</button>
     </div>`).join('')}
-  </div>`;
+  </div>
+  ${log.length?`<div style="font-size:16px;font-weight:800;margin:22px 0 12px">Histórico</div>
+  <div class="card" style="overflow:hidden">
+    ${log.slice(0,30).map((x,idx)=>`<div style="padding:14px 16px;display:flex;align-items:center;gap:12px;${idx===Math.min(log.length,30)-1?'':'border-bottom:1px solid #F2F2F5'}">
+      <span style="font-size:20px">${x.emoji}</span>
+      <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--tinta-suave)">${x.name}</div><div style="font-size:12px;color:var(--cinza)">${tempoRel(x.ts)}</div></div>
+      <span style="background:var(--rosa-nevoa);color:var(--rosa);padding:5px 12px;border-radius:999px;font-size:13px;font-weight:800">${x.min} min</span>
+      <span onclick="removeExtra(${x.ts})" style="cursor:pointer;color:#C6C6CF;padding:4px">${svg('trash',{s:16})}</span>
+    </div>`).join('')}
+  </div>`:''}`;
 }
+function openExtra(i){
+  const a=ATIVS[i];
+  const el=ensureModal();
+  el.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:center;gap:12px"><span style="font-size:26px">${a[0]}</span><div style="font-size:18px;font-weight:800">Registrar ${a[1]}</div></div>
+    <div>
+      <div style="font-size:13px;color:var(--cinza);font-weight:600;margin-bottom:8px">Quanto tempo você fez? (minutos)</div>
+      <input id="extraMin" type="number" value="20" min="1" inputmode="numeric" style="width:100%;border:1.5px solid var(--rosa);background:#fff;border-radius:12px;height:50px;padding:0 14px;font-size:18px;font-weight:800;outline:none;color:var(--tinta)">
+      <div style="display:flex;gap:8px;margin-top:10px">
+        ${[10,20,30,45].map(m=>`<div class="chip" style="flex:1;justify-content:center;padding:9px 0" onclick="document.getElementById('extraMin').value=${m}">${m} min</div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-ghost" style="flex:1;height:50px;justify-content:center" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" style="flex:1.5;height:50px" onclick="saveExtra(${i})">${svg('check',{s:16,w:2.4})} Salvar</button>
+    </div>
+  </div>`;
+  el.style.display='flex';
+}
+function saveExtra(i){
+  const a=ATIVS[i];
+  const min=Math.max(1,parseInt(document.getElementById('extraMin').value,10)||0);
+  S.extras=S.extras||[]; S.extras.unshift({name:a[1],emoji:a[0],min,ts:Date.now()});
+  save(); closeModal(); go('home','extras');
+}
+function removeExtra(ts){if(confirm('Remover este registro?')){S.extras=(S.extras||[]).filter(x=>x.ts!==ts);save();go('home','extras');}}
 function viewBonus(){
   const itens=[
     ['🧘','Guia de Alongamento','Rotina completa de 10 minutos para antes e depois do treino'],
@@ -617,6 +668,13 @@ function showLoader(txt){
   el.style.display='flex';
 }
 function hideLoader(){const el=document.getElementById('loader');if(el)el.style.display='none';}
+function ensureModal(){
+  let el=document.getElementById('modal');
+  if(!el){el=document.createElement('div');el.id='modal';el.style.cssText='position:fixed;inset:0;background:rgba(23,23,28,.45);display:none;align-items:flex-end;justify-content:center;z-index:98;padding:16px';
+    el.addEventListener('click',e=>{if(e.target===el)closeModal();});document.body.appendChild(el);}
+  return el;
+}
+function closeModal(){const el=document.getElementById('modal');if(el)el.style.display='none';}
 const _spin=document.createElement('style');_spin.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(_spin);
 
 render();
