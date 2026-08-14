@@ -14,10 +14,10 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST")
     return { statusCode: 405, headers: cors, body: JSON.stringify({ error: "Método não permitido" }) };
 
-  const URL = process.env.SUPABASE_URL;
+  const URL = process.env.SUPABASE_URL || "https://bjtxrtsazsehcqmtnpkg.supabase.co";
   const SR = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!URL || !SR)
-    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: "Painel não configurado (faltam env vars no Netlify)." }) };
+  if (!SR)
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: "Falta a variável SUPABASE_SERVICE_ROLE_KEY no Netlify (com escopo Functions)." }) };
 
   // token do usuário logado (enviado pelo app)
   const auth = event.headers.authorization || event.headers.Authorization || "";
