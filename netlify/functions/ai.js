@@ -1,7 +1,7 @@
 // Serverless function: proxy seguro para a API do Gemini.
 // A chave NUNCA vai para o navegador — fica em process.env.GEMINI_API_KEY (config no Netlify).
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
 
 const SYSTEM = `Você é a Atlas, assistente do app de calistenia "Calistenia by Atlas".
 Tom: acolhedor, segunda pessoa, frases curtas, verbo no começo. Zero culpa, zero jargão técnico,
