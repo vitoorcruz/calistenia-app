@@ -788,7 +788,7 @@ async function doAuth(){
     if(AUTH.mode==='signup'){
       const {data,error}=await sb.auth.signUp({email,password:pass});
       if(error)throw error;
-      if(nome)S.name=nome;
+      if(nome){S.name=nome;AUTH.pendingName=nome;}
       if(!data.session){ // confirmação de e-mail ligada
         AUTH.busy=false;AUTH.err='Conta criada! Confirme pelo link enviado ao seu e-mail e depois faça login.';AUTH.mode='login';renderAuth();return;
       }
@@ -820,6 +820,7 @@ async function logout(){
 async function enterApp(user){
   AUTH.busy=false;
   await loadCloud(user);
+  if(AUTH.pendingName){ S.name=AUTH.pendingName; AUTH.pendingName=null; }
   document.getElementById('tabbar').style.display='flex';
   go('home'); cloudSave();
 }
