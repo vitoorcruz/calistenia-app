@@ -1,7 +1,11 @@
 // Serverless function: proxy seguro para a API do Gemini.
 // A chave NUNCA vai para o navegador — fica em process.env.GEMINI_API_KEY (config no Netlify).
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+// Ordem de tentativa: modelos "lite" têm mais capacidade e falham menos com 503.
+const MODELS = (process.env.GEMINI_MODEL
+  ? [process.env.GEMINI_MODEL]
+  : ["gemini-2.5-flash-lite", "gemini-flash-latest", "gemini-2.5-flash"]);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const SYSTEM = `Você é a Atlas, assistente do app de calistenia "Calistenia by Atlas".
 Tom: acolhedor, segunda pessoa, frases curtas, verbo no começo. Zero culpa, zero jargão técnico,
@@ -29,29 +33,43 @@ exports.handler = async (event) => {
   if (!prompt.trim())
     return { statusCode: 400, headers: cors, body: JSON.stringify({ error: "Prompt vazio" }) };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
   const payload = {
     systemInstruction: { parts: [{ text: SYSTEM }] },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 800 },
+    generationConfig: { temperature: 0.7, maxOutputTokens: 900 },
   };
 
-  try {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      const msg = (data && data.error && data.error.message) || "Erro na API do Gemini";
-      return { statusCode: r.status, headers: cors, body: JSON.stringify({ error: msg }) };
+  let lastErr = "Erro na API do Gemini";
+  // Tenta cada modelo; em caso de sobrecarga (429/503) faz 1 retry com espera antes de trocar.
+  for (const model of MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          const text =
+            data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
+            "Não consegui responder agora. Tente novamente. 🌱";
+          return { statusCode: 200, headers: cors, body: JSON.stringify({ text }) };
+        }
+        lastErr = (data && data.error && data.error.message) || lastErr;
+        const overloaded = r.status === 503 || r.status === 429;
+        if (overloaded && attempt === 0) { await sleep(900); continue; } // retry mesmo modelo
+        break; // troca de modelo
+      } catch (e) {
+        lastErr = "Falha ao contatar o Gemini: " + e.message;
+        break;
+      }
     }
-    const text =
-      data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
-      "Não consegui responder agora. Tente novamente. 🌱";
-    return { statusCode: 200, headers: cors, body: JSON.stringify({ text }) };
-  } catch (e) {
-    return { statusCode: 502, headers: cors, body: JSON.stringify({ error: "Falha ao contatar o Gemini: " + e.message }) };
   }
+  return {
+    statusCode: 503,
+    headers: cors,
+    body: JSON.stringify({ error: "O serviço de IA está sobrecarregado no momento. Tente novamente em alguns segundos. 🌱", detail: lastErr }),
+  };
 };

@@ -154,11 +154,16 @@ let route={tab:'home',sub:null,data:null};
 function go(tab,sub,data){route={tab,sub:sub||null,data:data||null};render()}
 const TABS=[['home','Início','home'],['treinos','Treinos','dumbbell'],['dieta','Dieta','diet'],['suporte','Suporte','chat'],['perfil','Perfil','user']];
 
+let lastKey=null;
 function render(){
   const v=document.getElementById('view');
+  const key=route.tab+'/'+(route.sub||'');
+  const sameScreen=(key===lastKey);
+  const keepY=window.scrollY;
   let html='';
   if(route.sub==='workout') html=viewWorkout(route.data);
   else if(route.sub==='plano') html=viewPlano();
+  else if(route.sub==='receitas') html=viewReceitas();
   else if(route.sub==='program') html=viewProgram();
   else if(route.sub==='exercises') html=viewAllExercises();
   else if(route.sub==='philosophy') html=viewPhilosophy();
@@ -170,8 +175,12 @@ function render(){
   else if(route.tab==='suporte') html=viewSuporte();
   else if(route.tab==='perfil') html=viewPerfil();
   v.innerHTML='<div class="fade">'+html+'</div>';
-  v.scrollTop=0; document.getElementById('phone').scrollTop=0; window.scrollTo(0,0);
   renderTabs();
+  // Mantém a posição de rolagem quando é a MESMA tela (toggles, acordeão, registro);
+  // só volta ao topo quando muda de tela de verdade.
+  if(sameScreen){ window.scrollTo(0,keepY); }
+  else { window.scrollTo(0,0); }
+  lastKey=key;
   if(route.tab==='suporte'&&!route.sub){const c=document.getElementById('chatScroll');if(c)c.scrollTop=c.scrollHeight;}
 }
 function renderTabs(){
@@ -186,7 +195,8 @@ function viewHome(){
   const ex=dayExercises(nd-1);
   const pct=progressPct();
   return `
-  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px">
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px">
+    <span style="display:inline-block;width:40px;height:40px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
     <span style="font-family:'Big Shoulders Display';font-weight:800;font-size:26px;color:var(--rosa);letter-spacing:1px">CALISTENIA</span>
     <span style="font-size:11px;font-weight:600;color:var(--cinza);background:var(--rosa-nevoa);padding:3px 8px;border-radius:999px">by Atlas</span>
   </div>
@@ -503,7 +513,7 @@ function viewDieta(){
   </div>
   <div class="card" style="overflow:hidden;margin-bottom:14px">
     ${listRow('leaf','Seu Plano Alimentar','Cardápio personalizado',"S.ultimaDieta?go('dieta','plano'):alert('Preencha seus dados e gere sua dieta abaixo. 🌱')",'#10B981')}
-    ${listRow('book','Receitas','Pratos saudáveis e fáceis',"go('home','bonus')",'#F5BE22',true)}
+    ${listRow('book','Receitas','Pratos saudáveis e fáceis',"gerarReceitas()",'#F5BE22',true)}
   </div>
 
   <div class="card" style="padding:20px;margin-bottom:14px">
@@ -577,6 +587,24 @@ function viewPlano(){
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('dieta')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Seu Plano Alimentar</div><div style="font-size:13px;color:var(--cinza)">Gerado por IA para seus objetivos</div></div></div>
   <div class="card" style="padding:22px;font-size:15px;line-height:1.65;color:var(--tinta-suave);white-space:pre-wrap">${(S.ultimaDieta||'').replace(/</g,'&lt;')}</div>
   <button class="btn-primary" style="margin-top:16px" onclick="go('dieta')">${svg('check',{s:16,w:2.4})} Entendi</button>`;
+}
+async function gerarReceitas(){
+  const restr=Object.keys(S.restricoes).filter(k=>S.restricoes[k]);
+  const foods=Object.values(S.foods).flat();
+  const prompt=`Sugira 3 receitas saudáveis, simples e rápidas de preparar, usando principalmente estes alimentos preferidos: ${foods.length?foods.join(', '):'variados e acessíveis'}.
+Respeite estas restrições alimentares: ${restr.length?restr.join(', '):'nenhuma'}.
+Para cada receita mostre: nome, ingredientes em tópicos curtos e o modo de preparo em 3 a 5 passos. Mantenha tudo enxuto e prático.`;
+  showLoader('Criando receitas com a IA Atlas… 🍎');
+  try{
+    const txt=await callAI(prompt);
+    S.ultimaReceita=txt; save();
+    hideLoader(); go('dieta','receitas');
+  }catch(e){ hideLoader(); alert('Não consegui gerar as receitas agora: '+e.message); }
+}
+function viewReceitas(){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('dieta')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Receitas</div><div style="font-size:13px;color:var(--cinza)">Pratos saudáveis feitos por IA</div></div></div>
+  <div class="card" style="padding:22px;font-size:15px;line-height:1.65;color:var(--tinta-suave);white-space:pre-wrap">${(S.ultimaReceita||'').replace(/</g,'&lt;')}</div>
+  <button class="btn-primary" style="margin-top:16px" onclick="gerarReceitas()">${svg('spark',{s:16})} Gerar outras receitas</button>`;
 }
 
 /* ---------------- SUPORTE ---------------- */
