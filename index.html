@@ -197,7 +197,7 @@ function viewHome(){
   const pct=progressPct();
   return `
   <div style="display:flex;justify-content:center;margin-bottom:18px">
-    <img src="logo.png" alt="Calistenia by Atlas" style="height:40px;width:auto">
+    <img src="logo.png?v=2" alt="Calistenia by Atlas" style="height:40px;width:auto">
   </div>
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
     <div style="width:44px;height:44px;border-radius:999px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff">${svg('user',{s:22})}</div>
@@ -715,9 +715,8 @@ let sb=null;
 try{ if(window.supabase) sb=window.supabase.createClient(SUPA_URL,SUPA_ANON); }catch(e){ console.warn('Supabase indisponível',e); }
 let AUTH={user:null,mode:'login',busy:false,err:'',paid:false,plan:null,isAdmin:false};
 
-/* Links de checkout da Cakto — TROQUE pelos seus links reais */
-const CAKTO_URL_ASSINATURA='https://pay.cakto.com.br/SEU_LINK_ASSINATURA';
-const CAKTO_URL_UNICA='https://pay.cakto.com.br/SEU_LINK_COMPRA_UNICA';
+/* Link de checkout da Cakto (produto principal + order bumps) */
+const CAKTO_URL='https://pay.cakto.com.br/spc2rzg';
 
 // ---- estado que sincronizamos (sem cache de chat gigante) ----
 function cloudPayload(){
@@ -761,7 +760,7 @@ function viewAuth(){
   const signup=AUTH.mode==='signup';
   return `<div style="min-height:calc(100dvh - 40px);display:flex;flex-direction:column;justify-content:center;gap:22px;padding:8px 4px">
     <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
-      <img src="logo.png" alt="Calistenia by Atlas" style="height:52px;width:auto">
+      <img src="logo.png?v=2" alt="Calistenia by Atlas" style="height:52px;width:auto">
       <div style="font-size:14px;color:var(--cinza);text-align:center">${signup?'Crie sua conta e comece sua jornada':'Bem-vinda de volta! Entre para continuar'}</div>
     </div>
     <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:14px">
@@ -918,7 +917,7 @@ function viewPaywall(){
   const feat=(t)=>`<div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--tinta-suave)"><span style="color:var(--verde);flex-shrink:0;margin-top:2px">${svg('check',{s:16,c:'#10B981',w:3})}</span>${t}</div>`;
   return `<div style="display:flex;flex-direction:column;gap:18px;padding:8px 2px 24px">
     <div style="text-align:center;margin-top:8px">
-      <img src="logo.png" alt="Calistenia by Atlas" style="height:46px;width:auto">
+      <img src="logo.png?v=2" alt="Calistenia by Atlas" style="height:46px;width:auto">
       <div style="font-size:24px;font-weight:800;margin-top:12px">Desbloqueie o Calistenia</div>
       <div style="font-size:14px;color:var(--cinza);margin-top:4px">Programa de 21 dias, dieta e suporte com IA</div>
     </div>
@@ -930,10 +929,8 @@ function viewPaywall(){
       ${feat('Acompanhamento de progresso e atividades extras')}
     </div>
     <div style="display:flex;flex-direction:column;gap:12px">
-      <a href="${CAKTO_URL_ASSINATURA}" target="_blank" rel="noopener" style="text-decoration:none">
-        <div class="btn-primary" style="height:56px;flex-direction:column;gap:2px;line-height:1.1">Assinar agora<span style="font-size:12px;font-weight:600;opacity:.9">acesso completo, renovação automática</span></div></a>
-      <a href="${CAKTO_URL_UNICA}" target="_blank" rel="noopener" style="text-decoration:none">
-        <div style="border:1.5px solid var(--rosa);color:var(--rosa);height:52px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:700;font-size:16px;line-height:1.1">Compra única<span style="font-size:12px;font-weight:600;opacity:.8">pague uma vez, acesso vitalício</span></div></a>
+      <a href="${CAKTO_URL}" target="_blank" rel="noopener" style="text-decoration:none">
+        <div class="btn-primary" style="height:56px;flex-direction:column;gap:2px;line-height:1.1">Quero meu acesso agora<span style="font-size:12px;font-weight:600;opacity:.9">pagamento seguro pela Cakto</span></div></a>
     </div>
     <div class="card" style="padding:16px;text-align:center;font-size:14px;color:var(--tinta-suave)">
       Já comprou? Use o <strong>mesmo e-mail</strong> da compra.<br>
