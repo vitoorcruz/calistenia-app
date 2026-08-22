@@ -196,10 +196,8 @@ function viewHome(){
   const ex=dayExercises(nd-1);
   const pct=progressPct();
   return `
-  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px">
-    <span style="display:inline-block;width:40px;height:40px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
-    <span style="font-family:'Big Shoulders Display';font-weight:800;font-size:26px;color:var(--rosa);letter-spacing:1px">CALISTENIA</span>
-    <span style="font-size:11px;font-weight:600;color:var(--cinza);background:var(--rosa-nevoa);padding:3px 8px;border-radius:999px">by Atlas</span>
+  <div style="display:flex;justify-content:center;margin-bottom:18px">
+    <img src="logo.png" alt="Calistenia by Atlas" style="height:40px;width:auto">
   </div>
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
     <div style="width:44px;height:44px;border-radius:999px;background:var(--grad);display:flex;align-items:center;justify-content:center;color:#fff">${svg('user',{s:22})}</div>
@@ -762,9 +760,8 @@ function renderAuth(){
 function viewAuth(){
   const signup=AUTH.mode==='signup';
   return `<div style="min-height:calc(100dvh - 40px);display:flex;flex-direction:column;justify-content:center;gap:22px;padding:8px 4px">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-      <span style="display:inline-block;width:64px;height:64px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
-      <div style="font-family:'Big Shoulders Display';font-weight:800;font-size:30px;color:var(--rosa);letter-spacing:1px">CALISTENIA</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <img src="logo.png" alt="Calistenia by Atlas" style="height:52px;width:auto">
       <div style="font-size:14px;color:var(--cinza);text-align:center">${signup?'Crie sua conta e comece sua jornada':'Bem-vinda de volta! Entre para continuar'}</div>
     </div>
     <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:14px">
@@ -921,8 +918,8 @@ function viewPaywall(){
   const feat=(t)=>`<div style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--tinta-suave)"><span style="color:var(--verde);flex-shrink:0;margin-top:2px">${svg('check',{s:16,c:'#10B981',w:3})}</span>${t}</div>`;
   return `<div style="display:flex;flex-direction:column;gap:18px;padding:8px 2px 24px">
     <div style="text-align:center;margin-top:8px">
-      <span style="display:inline-block;width:52px;height:52px;background:var(--rosa);-webkit-mask:url('conversacao.png') center/contain no-repeat;mask:url('conversacao.png') center/contain no-repeat"></span>
-      <div style="font-size:24px;font-weight:800;margin-top:8px">Desbloqueie o Calistenia</div>
+      <img src="logo.png" alt="Calistenia by Atlas" style="height:46px;width:auto">
+      <div style="font-size:24px;font-weight:800;margin-top:12px">Desbloqueie o Calistenia</div>
       <div style="font-size:14px;color:var(--cinza);margin-top:4px">Programa de 21 dias, dieta e suporte com IA</div>
     </div>
     <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:12px">
