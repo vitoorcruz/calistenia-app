@@ -53,22 +53,6 @@ exports.handler = async (event) => {
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (e) { body = { _raw: event.body }; }
 
-  // Diagnóstico temporário protegido pelo mesmo segredo do webhook.
-  if (body && body._audit === true && Array.isArray(body.emails)) {
-    const emails = body.emails.map(v => String(v).trim().toLowerCase()).filter(Boolean).slice(0, 10);
-    const enc = encodeURIComponent(`(${emails.join(",")})`);
-    const [entRes, logRes] = await Promise.all([
-      sb(`entitlements?select=email,active,plan,status,updated_at&email=in.${enc}`),
-      sb("webhook_logs?select=received_at,matched_email,matched_status,body&order=received_at.desc&limit=100"),
-    ]);
-    const allLogs = await logRes.json();
-    const logs = Array.isArray(allLogs) ? allLogs.filter(log => {
-      const raw = JSON.stringify(log).toLowerCase();
-      return emails.some(email => raw.includes(email));
-    }) : [];
-    return { statusCode: 200, body: JSON.stringify({ entitlements: await entRes.json(), logs }) };
-  }
-
   // extrai e-mail e status de forma tolerante a formato
   const email = (deepFind(body, ["email", "customer_email", "buyer_email", "e_mail"]) || "").toString().trim().toLowerCase();
   const blob = collectStrings(body).join(" | ");
