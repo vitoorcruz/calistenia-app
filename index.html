@@ -93,28 +93,35 @@ const WEEKS=[
   {n:3,name:'Intensificação',desc:'Consolidar força e definição'},
 ];
 const EX_POOL=[
-  ['Círculos de Braço Garça','Movimento circular amplo dos braços para aquecer os ombros.','Ombros'],
-  ['Torção Rítmica em Pé','Rotação do tronco em pé, ativando toda a região do core.','Core'],
-  ['Agachamento Templo','Agachamento controlado com braços à frente, foco em pernas.','Pernas'],
-  ['Prancha das Pernas Cruzadas','Prancha com pernas cruzadas fortalecendo o core com estabilidade.','Core'],
-  ['Elevação de Joelhos','Elevação alternada dos joelhos, cardio leve e abdômen.','Abdômen'],
-  ['Flexão de Parede','Flexão apoiada na parede, ideal para iniciantes.','Peito'],
-  ['Ponte de Glúteos','Elevação do quadril deitado, ativando glúteos e lombar.','Glúteos'],
-  ['Marcha no Lugar','Marcha estacionária para elevar a frequência cardíaca.','Cardio'],
-  ['Superman','Deitado de bruços, eleva braços e pernas simultaneamente.','Lombar'],
-  ['Abdominal Curto','Contração abdominal curta e controlada.','Abdômen'],
-  ['Afundo Alternado','Passada à frente descendo o joelho, foco em pernas.','Pernas'],
-  ['Prancha Lateral','Apoio lateral que trabalha os oblíquos.','Oblíquos'],
-  ['Polichinelo Suave','Polichinelo de baixo impacto para cardio.','Cardio'],
-  ['Rotação de Ombros','Rotação lenta dos ombros para mobilidade.','Ombros'],
-  ['Elevação de Panturrilha','Subida na ponta dos pés, fortalece panturrilhas.','Pernas'],
-  ['Alongamento Gato-Vaca','Mobilidade da coluna alternando arqueamento.','Coluna'],
+  ['Escalador em Prancha Baixa','Mountain climber em posição de prancha, cardio intenso com trabalho de core.','Core - Cardio','Escalador_em_Prancha_Baixa.mp4'],
+  ['Tríceps no Banco/Cadeira','Mergulho de tríceps apoiado, definindo a parte posterior dos braços.','Tríceps','Triceps_no_Banco.mp4'],
+  ['Flexão de Parede Fluida','Flexão apoiada na parede, fortalecendo peito e braços de forma segura.','Peito - Tríceps','Flexao_de_Parede.mp4'],
+  ['Círculos de Braço Garça','Movimentos circulares suaves dos braços, aquecendo ombros e melhorando mobilidade.','Ombros - Braços','Circulos_de_Braco_Garca.mp4'],
+  ['Chute Traseiro Rítmico','Chute para trás com ritmo, ativando glúteos e posterior da coxa.','Glúteos - Isquiotibiais','Chute_Traseiro_Ritmico.mp4'],
+  ['Polichinelo Leque','Polichinelo suave com movimento de braços em leque, cardio de baixo impacto.','Cardio - Ombros','Polichinelo_Leque.mp4'],
+  ['Joelhos Altos Leves','Elevação alternada dos joelhos com ritmo moderado, aquecendo o corpo.','Cardio - Core','Joelhos_Altos_Leves.mp4'],
+  ['Agachamento Lateral Deslizante','Agachamento com deslocamento lateral, trabalhando adutores e glúteos.','Adutores - Glúteos - Quadríceps','Agachamento_Lateral_Deslizante.mp4'],
+  ['Elevação Pélvica Fluida','Ponte de quadril com movimento controlado, ativando glúteos e posterior.','Glúteos - Lombar','Elevacao_Pelvica_Fluida.mp4'],
+  ['Afundo Crescente (Direito)','Afundo com movimento fluido no lado direito, trabalhando força e equilíbrio.','Quadríceps - Glúteos - Isquiotibiais','Afundo_Lado_Direito.mp4'],
+  ['Afundo Crescente (Esquerdo)','Afundo com movimento fluido no lado esquerdo, trabalhando força e equilíbrio.','Quadríceps - Glúteos - Isquiotibiais','Afundo_Crescente.mp4'],
+  ['Agachamento Templo','Agachamento profundo com postura ereta, fortalecendo pernas e glúteos.','Quadríceps - Glúteos','Agachamento_Templo.mp4'],
+  ['Elevação de Perna Bambu','Elevação lateral da perna com controle, fortalecendo glúteos e coxas.','Glúteos - Coxas','Elevacao_de_Perna_Bambu.mp4'],
+  ['Abdominal Bicicleta Fluido','Movimento alternado de pernas com rotação do tronco, trabalhando todo o abdômen.','Abdômen - Oblíquos','Abdominal_Bicicleta_Fluido.mp4'],
+  ['Torção Rítmica em Pé','Rotação suave do tronco em pé, ativando a cintura e melhorando a mobilidade.','Oblíquos - Core','Torcao_Ritmica_em_Pe.mp4'],
+  ['Prancha Lótus','Prancha com posição das pernas cruzadas, fortalecendo o core com estabilidade.','Core - Abdômen','Prancha_Lotus.mp4'],
 ];
-function dayExercises(dayIdx){
-  const out=[];
-  for(let i=0;i<10;i++){out.push(EX_POOL[(dayIdx*3+i)%EX_POOL.length]);}
-  return out;
+const EX_BY_NAME=Object.fromEntries(EX_POOL.map(e=>[e[0],e]));
+const WEEK_EXERCISES={
+  1:['Círculos de Braço Garça','Torção Rítmica em Pé','Agachamento Templo','Afundo Crescente (Esquerdo)','Afundo Crescente (Direito)','Elevação Pélvica Fluida','Abdominal Bicicleta Fluido','Elevação de Perna Bambu','Prancha Lótus','Flexão de Parede Fluida'],
+  2:['Círculos de Braço Garça','Polichinelo Leque','Agachamento Lateral Deslizante','Afundo Crescente (Esquerdo)','Afundo Crescente (Direito)','Elevação Pélvica Fluida','Abdominal Bicicleta Fluido','Elevação de Perna Bambu','Prancha Lótus','Chute Traseiro Rítmico','Flexão de Parede Fluida'],
+  3:['Polichinelo Leque','Agachamento Templo','Afundo Crescente (Esquerdo)','Afundo Crescente (Direito)','Agachamento Lateral Deslizante','Joelhos Altos Leves','Abdominal Bicicleta Fluido','Elevação de Perna Bambu','Prancha Lótus','Elevação Pélvica Fluida','Tríceps no Banco/Cadeira','Flexão de Parede Fluida'],
+};
+function dayInfo(dayTotal){
+  const week=Math.min(3,Math.floor((dayTotal-1)/7)+1);
+  const minutes=week===1?15:week===2?20:25;
+  return {week,minutes,exercises:WEEK_EXERCISES[week].map(n=>EX_BY_NAME[n])};
 }
+function dayExercises(dayIdx){return dayInfo(dayIdx+1).exercises;}
 function totalDay(week,day){return (week-1)*7+day;} // 1..21
 
 const FOOD_GROUPS=[
@@ -193,7 +200,7 @@ function renderTabs(){
 /* ---------------- HOME ---------------- */
 function viewHome(){
   const nd=nextDay(), w=WEEKS[Math.floor((nd-1)/7)], dayInWeek=((nd-1)%7)+1;
-  const ex=dayExercises(nd-1);
+  const info=dayInfo(nd), ex=info.exercises;
   const pct=progressPct();
   return `
   <div style="display:flex;justify-content:center;margin-bottom:18px">
@@ -229,11 +236,11 @@ function viewHome(){
     </div>
     <div style="padding:16px 20px 20px;display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;gap:16px;font-size:13px;color:var(--cinza);font-weight:600">
-        <span style="display:flex;align-items:center;gap:5px">${svg('clock',{s:13})} 15 min</span>
-        <span style="display:flex;align-items:center;gap:5px">${svg('flame',{s:13})} 10 exercícios</span>
+        <span style="display:flex;align-items:center;gap:5px">${svg('clock',{s:13})} ${info.minutes} min</span>
+        <span style="display:flex;align-items:center;gap:5px">${svg('flame',{s:13})} ${ex.length} exercícios</span>
       </div>
       ${ex.slice(0,3).map((e,i)=>`<div style="background:#F7F7F9;border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--tinta-suave)"><span style="width:24px;height:24px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">${i+1}</span>${e[0]}</div>`).join('')}
-      <div style="font-size:13px;color:var(--rosa);font-weight:700;padding-left:4px">+7 exercícios…</div>
+      <div style="font-size:13px;color:var(--rosa);font-weight:700;padding-left:4px">+${ex.length-3} exercícios…</div>
       <button class="btn-primary" style="height:48px;margin-top:6px" onclick="go('treinos','workout',${nd})">${svg('play',{s:15,w:2.4})} Iniciar Treino</button>
     </div>
   </div>
@@ -291,11 +298,11 @@ function weekBlock(w){
   let inner='';
   if(open){
     for(let d=1;d<=7;d++){
-      const total=totalDay(w.n,d), done=S.done[total], active=total===nd;
+      const total=totalDay(w.n,d), done=S.done[total], active=total===nd, info=dayInfo(total);
       inner+=`<div style="border:${active?'1.5px solid var(--rosa)':'1px solid #F0F0F3'};border-radius:14px;padding:14px 16px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;${active?'background:#fff':''}">
         <div><div class="label" style="color:var(--cinza)">Semana ${w.n} — ${w.name}</div>
         <div style="font-size:17px;font-weight:800;margin-top:2px">Dia ${d} ${done?'✅':''}</div>
-        <div style="font-size:13px;color:var(--cinza);margin-top:4px;display:flex;gap:12px"><span>${svg('clock',{s:12})} 15 min</span><span>${svg('flame',{s:12})} 10 exercícios</span></div></div>
+        <div style="font-size:13px;color:var(--cinza);margin-top:4px;display:flex;gap:12px"><span>${svg('clock',{s:12})} ${info.minutes} min</span><span>${svg('flame',{s:12})} ${info.exercises.length} exercícios</span></div></div>
         ${active
           ?`<button class="btn-primary" style="width:auto;height:40px;padding:0 20px;font-size:14px" onclick="go('treinos','workout',${total})">${svg('play',{s:14,w:2.4})} Iniciar</button>`
           :`<button class="btn-ghost" onclick="go('treinos','workout',${total})">${svg('play',{s:13,w:2.4})} Ver</button>`}
@@ -345,26 +352,32 @@ function videoBlock(dayTotal,w,dayInWeek){
 }
 function viewWorkout(dayTotal){
   const w=WEEKS[Math.floor((dayTotal-1)/7)], dayInWeek=((dayTotal-1)%7)+1;
-  const ex=dayExercises(dayTotal-1), done=S.done[dayTotal];
+  const info=dayInfo(dayTotal), ex=info.exercises, done=S.done[dayTotal];
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer" onclick="go('treinos')">
     ${svg('back',{s:20,c:'var(--tinta-suave)'})}
-    <div><div style="font-size:19px;font-weight:800">Semana ${w.n} · Dia ${dayInWeek}</div><div style="font-size:13px;color:var(--cinza)">${w.name} — 15 min · 10 exercícios</div></div>
+    <div><div style="font-size:19px;font-weight:800">Semana ${w.n} · Dia ${dayInWeek}</div><div style="font-size:13px;color:var(--cinza)">${w.name} — ${info.minutes} min · ${ex.length} exercícios</div></div>
   </div>
-  ${videoBlock(dayTotal,w,dayInWeek)}
+  <div style="background:linear-gradient(135deg,#FCEFF2,#fff);border:1px solid #F3D5DC;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:center">
+    <span style="width:40px;height:40px;border-radius:999px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">${svg('play',{s:17,c:'#fff'})}</span>
+    <div><div style="font-size:15px;font-weight:800">Treino guiado por vídeo</div><div style="font-size:13px;color:var(--cinza);margin-top:2px">Dê play em cada movimento e acompanhe a execução.</div></div>
+  </div>
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
-  ${ex.map((e,i)=>`<div class="card" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
-    <span style="width:28px;height:28px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i+1}</span>
-    <div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div>
-    <div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div>
-    <div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span> <span style="background:var(--rosa-nevoa);color:var(--rosa);padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700">3 × 30s</span></div></div>
+  ${ex.map((e,i)=>`<div class="card" style="overflow:hidden">
+    <video src="assets/exercises/${e[3]}" controls muted playsinline preload="metadata" style="display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#17171C"></video>
+    <div style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
+      <span style="width:28px;height:28px;border-radius:999px;background:var(--rosa-nevoa);color:var(--rosa);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i+1}</span>
+      <div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div>
+      <div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div>
+      <div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span></div></div>
+    </div>
   </div>`).join('')}
   </div>
   <button class="btn-primary" ${done?'disabled':''} onclick="completeWorkout(${dayTotal})">${done?svg('check',{s:17,w:2.4})+' Treino concluído':svg('check',{s:17,w:2.4})+' Marcar como Concluída'}</button>`;
 }
 function completeWorkout(d){
   if(S.done[d])return;
-  S.done[d]=true; S.minutes+=15; save();
+  S.done[d]=true; S.minutes+=dayInfo(d).minutes; save();
   const pct=progressPct();
   go('treinos');
   setTimeout(()=>alert(pct===100?'Parabéns! Você concluiu o programa de 21 dias! 🎉🌸':'Treino concluído! Cada dia é uma nova conquista. 🌸'),60);
@@ -376,14 +389,14 @@ function viewProgram(){
   ${WEEKS.map(w=>`<div class="card" style="padding:18px;margin-bottom:14px">
     <div class="label" style="color:var(--rosa)">Semana ${w.n}</div>
     <div style="font-size:18px;font-weight:800;margin-top:4px">${w.name}</div>
-    <div style="font-size:14px;color:var(--cinza);line-height:1.55;margin-top:6px">${w.desc}. 7 dias de treino, 15 minutos cada.</div>
+    <div style="font-size:14px;color:var(--cinza);line-height:1.55;margin-top:6px">${w.desc}. 7 dias de treino, ${w.n===1?15:w.n===2?20:25} minutos cada.</div>
   </div>`).join('')}`;
 }
 function viewAllExercises(){
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer" onclick="go('treinos')">${svg('back',{s:20})}<div><div style="font-size:19px;font-weight:800">Todos os Exercícios</div><div style="font-size:13px;color:var(--cinza)">${EX_POOL.length} exercícios disponíveis</div></div></div>
   <div class="card" style="border-radius:999px;height:48px;display:flex;align-items:center;gap:10px;padding:0 16px;color:#A9A9B4;font-size:15px;box-shadow:none;border:1px solid #E3E3E8;margin-bottom:16px">${svg('search',{s:16})} Buscar exercício ou grupo muscular…</div>
   <div style="display:flex;flex-direction:column;gap:10px">
-  ${EX_POOL.map((e,i)=>`<div class="card" style="padding:14px 16px"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div><div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div><div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span></div></div>`).join('')}
+  ${EX_POOL.map((e,i)=>`<div class="card" style="overflow:hidden"><video src="assets/exercises/${e[3]}" controls muted playsinline preload="metadata" style="display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#17171C"></video><div style="padding:14px 16px"><div style="font-size:16px;font-weight:700;color:var(--tinta-suave)">${e[0]}</div><div style="font-size:14px;color:var(--cinza);line-height:1.5;margin-top:3px">${e[1]}</div><div style="margin-top:8px"><span style="background:#F5F5F7;color:#6E6E7A;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600">${e[2]}</span></div></div></div>`).join('')}
   </div>`;
 }
 function viewPhilosophy(){

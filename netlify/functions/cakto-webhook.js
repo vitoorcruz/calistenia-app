@@ -42,12 +42,13 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, body: "" };
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
   if (!SR) return { statusCode: 500, body: "faltando SUPABASE_SERVICE_ROLE_KEY" };
+  if (!SECRET) return { statusCode: 503, body: "faltando CAKTO_WEBHOOK_SECRET" };
 
   // valida segredo (query ?secret= ou header)
   const q = event.queryStringParameters || {};
   const h = event.headers || {};
   const provided = q.secret || h["x-cakto-secret"] || h["x-webhook-secret"] || h["x-cakto-signature"] || "";
-  if (SECRET && provided !== SECRET) return { statusCode: 401, body: "assinatura inválida" };
+  if (provided !== SECRET) return { statusCode: 401, body: "assinatura inválida" };
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (e) { body = { _raw: event.body }; }
