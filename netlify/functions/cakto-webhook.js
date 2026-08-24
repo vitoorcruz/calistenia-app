@@ -59,9 +59,14 @@ exports.handler = async (event) => {
     const enc = encodeURIComponent(`(${emails.join(",")})`);
     const [entRes, logRes] = await Promise.all([
       sb(`entitlements?select=email,active,plan,status,updated_at&email=in.${enc}`),
-      sb(`webhook_logs?select=received_at,matched_email,matched_status,body&matched_email=in.${enc}&order=received_at.desc&limit=20`),
+      sb("webhook_logs?select=received_at,matched_email,matched_status,body&order=received_at.desc&limit=100"),
     ]);
-    return { statusCode: 200, body: JSON.stringify({ entitlements: await entRes.json(), logs: await logRes.json() }) };
+    const allLogs = await logRes.json();
+    const logs = Array.isArray(allLogs) ? allLogs.filter(log => {
+      const raw = JSON.stringify(log).toLowerCase();
+      return emails.some(email => raw.includes(email));
+    }) : [];
+    return { statusCode: 200, body: JSON.stringify({ entitlements: await entRes.json(), logs }) };
   }
 
   // extrai e-mail e status de forma tolerante a formato
