@@ -72,11 +72,14 @@ exports.handler = async (event) => {
 
   // extrai e-mail e status de forma tolerante a formato
   const email = (deepFind(body, ["email", "customer_email", "buyer_email", "e_mail"]) || "").toString().trim().toLowerCase();
-  const blob = collectStrings(body).join(" | ");
   const statusRaw = (deepFind(body, ["status", "event", "type", "action", "payment_status", "transaction_status"]) || "").toString();
+  const status = statusRaw.trim().toLowerCase();
+  const blob = collectStrings(body).join(" | ");
 
-  const isPaid = /(approved|paid|complete|completed|active|authorized|aprovad|pago|autorizad|assinatura_ativa|subscription_active)/.test(blob);
-  const isCancel = /(refund|chargeback|charge_back|cancel|expired|expir|estorn|reembols|recus|declin|failed|falhou|inadimpl|overdue|unpaid|subscription_canceled|assinatura_cancelad)/.test(blob);
+  // A decisão de acesso usa apenas o evento/status principal. Procurar em todo
+  // o payload causava falsos cancelamentos por campos secundários da Cakto.
+  const isPaid = /^(purchase_approved|approved|paid|complete|completed|active|authorized|aprovad[oa]?|pago|autorizad[oa]?|assinatura_ativa|subscription_active|subscription_created|subscription_renewed)$/.test(status);
+  const isCancel = /^(refund|refunded|chargeback|charge_back|cancel|canceled|cancelled|expired|estornado|reembolsado|refused|declined|failed|overdue|unpaid|subscription_canceled|subscription_cancelled|subscription_renewal_refused|assinatura_cancelada)$/.test(status);
   const isSubscription = /(subscription|assinatura|recorr|recurring)/.test(blob);
   const active = isPaid && !isCancel;
 
