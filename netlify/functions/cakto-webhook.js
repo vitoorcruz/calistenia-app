@@ -53,23 +53,6 @@ exports.handler = async (event) => {
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (e) { body = { _raw: event.body }; }
 
-  // Auditoria temporária, restrita aos e-mails explicitamente informados.
-  if (body && body._audit === true && Array.isArray(body.emails)) {
-    const emails = body.emails.map(v => String(v).trim().toLowerCase()).filter(Boolean).slice(0, 5);
-    const enc = encodeURIComponent(`(${emails.join(",")})`);
-    const [entRes, logRes] = await Promise.all([
-      sb(`entitlements?select=email,active,plan,status,updated_at&email=in.${enc}`),
-      sb("webhook_logs?select=received_at,matched_email,matched_status,body&order=received_at.desc&limit=200"),
-    ]);
-    const allLogs = await logRes.json();
-    const logs = (Array.isArray(allLogs) ? allLogs.filter(log => {
-      if (log.body && log.body._audit === true) return false;
-      const raw = JSON.stringify(log).toLowerCase();
-      return emails.some(email => raw.includes(email));
-    }) : []).map(log => ({received_at:log.received_at,matched_email:log.matched_email,matched_status:log.matched_status}));
-    return { statusCode: 200, body: JSON.stringify({ entitlements: await entRes.json(), logs }) };
-  }
-
   // extrai e-mail e status de forma tolerante a formato
   const email = (deepFind(body, ["email", "customer_email", "buyer_email", "e_mail"]) || "").toString().trim().toLowerCase();
   const statusRaw = (deepFind(body, ["status", "event", "type", "action", "payment_status", "transaction_status"]) || "").toString();
